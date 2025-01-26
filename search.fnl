@@ -31,14 +31,11 @@
 (local stale-time 604800) ; 1 week
 
 (fn needs-refresh? [db url now]
-  (log :check url)
   (let [query (: "SELECT crawled_at FROM pages WHERE url = '%s'"
                  :format (db:escape url))
         cursor (assert (db:execute query))]
     (case (cursor:fetch)
-      crawled-at (let [old? (< (tonumber crawled-at) (- now stale-time))]
-                   (log :old? old? crawled-at (- now stale-time))
-                   old?)
+      crawled-at (< (tonumber crawled-at) (- now stale-time))
       _ true)))
 
 (local pandoc-cmd "pandoc -s -f html -t markdown %s")
@@ -49,7 +46,7 @@
 (fn index-url [db url now]
   (when (and (needs-refresh? db url now)
              (not (skip? url)))
-    (log :fetching)
+    (log :GET url)
     (with-open [pandoc (assert (io.popen (pandoc-cmd:format url)))]
       (let [sql (insert-sql db url
                             (extract-metadata (pandoc:read :*all) now))]
@@ -59,6 +56,8 @@
   (let [db (init)]
     (each [line (io.lines file)]
       (let [url (line:match "([^ ]+)")]
-        (index-url db url now)))))
+        (index-url db url now)
+        (when (os.getenv "SLOW")
+          (os.execute "sleep 1"))))))
 
 {: results : index}
