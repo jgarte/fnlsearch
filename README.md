@@ -20,8 +20,11 @@ Run server:
 * [x] web UI
 * [x] save titles in index
 * [x] partial reindexing
-* [x] source URLs from gotosocial
-* [ ] source URLs from feeds
+* [ ] ranking
+* [-] source URLs from
+  * [x] gotosocial database
+  * [ ] RSS feeds
+  * [ ] mastodon export
 * [ ] unescape titles
 
 ## Schema

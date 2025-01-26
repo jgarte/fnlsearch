@@ -10,7 +10,7 @@
         cursor (assert (db:execute query))
         out []]
     (each [content #(cursor:fetch)]
-      (collect [url (content:gmatch "https://[^%s\"<]+") &into out] url true))
+      (collect [url (content:gmatch "https://[^%s\"<#]+") &into out] url true))
     out))
 
 {: urls}

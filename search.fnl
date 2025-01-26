@@ -38,7 +38,7 @@
       crawled-at (< (tonumber crawled-at) (- now stale-time))
       _ true)))
 
-(local pandoc-cmd "pandoc -s -f html -t markdown %s")
+(local pandoc-cmd "pandoc -s -f html -t markdown %q")
 
 ;; pointing pandoc to a webm does NOT go well (just hangs forever)
 (fn skip? [url] (or (url:find "%.webm$") (url:find "%.mp[34]$")))
@@ -47,6 +47,7 @@
   (when (and (needs-refresh? db url now)
              (not (skip? url)))
     (log :GET url)
+    ;; TODO: error handling
     (with-open [pandoc (assert (io.popen (pandoc-cmd:format url)))]
       (let [sql (insert-sql db url
                             (extract-metadata (pandoc:read :*all) now))]

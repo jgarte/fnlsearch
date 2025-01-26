@@ -21,13 +21,12 @@
 
 (fn search-html [{: rawQuery}]
   (let [query (url.queryDecode rawQuery)]
-    (response (layout.layout [:p {} "Results for" [:kbd {} query]]
+    (response (layout.layout [:p {} "Results for" [:kbd {} query.q]]
                              (icollect [_ r (ipairs (search.results query))
                                         &into [:ul {}]]
                                [:li {} r])
                              form
-                             [:p {}
-                              [:a {:href "/"} "home"]]))))
+                             [:p {} [:a {:href "/"} "home"]]))))
 
 (router:get "/" home)
 (router:get "/q" search-html)
