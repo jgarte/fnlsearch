@@ -6,6 +6,7 @@
 
 (local layout (require :layout))
 (local search (require :search))
+(local gts (require :gts))
 
 (local form [:form {:action "/q" :method "GET"}
              [:input {:type "text" :name "q" :placeholder "query"}]
@@ -20,7 +21,7 @@
 
 (fn search-html [{: rawQuery}]
   (let [query (url.queryDecode rawQuery)]
-    (response (layout.layout [:p {} "Results"]
+    (response (layout.layout [:p {} "Results for" [:kbd {} query]]
                              (icollect [_ r (ipairs (search.results query))
                                         &into [:ul {}]]
                                [:li {} r])
@@ -34,6 +35,8 @@
 
 (case arg
   ["index" file] (search.index file (os.time))
+  ["gts" db-path username] (each [url (pairs (gts.urls db-path username))]
+                             (print url))
   ["start" port] (-> (moonmint)
                      (: :use router)
                      (: :start {: port}))

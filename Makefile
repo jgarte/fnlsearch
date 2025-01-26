@@ -1,5 +1,8 @@
-URL_FILE ?= urls.txt
+GTS_DB ?= /var/gotosocial/sqlite.db
+GTS_USERNAME ?= technomancy
 
-run: ; fennel main.fnl start 8082
-index: ; fennel main.fnl index $(URL_FILE)
-copy: ; rsync data.db home:src/search/data.db
+run: data.db; fennel main.fnl start 8082
+index: urls.txt; fennel main.fnl index urls.txt
+
+urls.txt: ; fennel main.fnl gts $(GTS_DB) $(GTS_USERNAME) > $@
+data.db: index

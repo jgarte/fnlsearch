@@ -12,7 +12,8 @@
 
 (fn results [{: q}]
   (let [db (init)
-        query (: "SELECT url, title FROM pages('%s');" :format (db:escape q))
+        query (: "SELECT distinct url, title FROM pages('%s');"
+                 :format (db:escape q))
         cursor (assert (db:execute query))]
     (icollect [url title #(cursor:fetch)]
       [:a {:href url} title])))
@@ -40,16 +41,24 @@
                    old?)
       _ true)))
 
+(local pandoc-cmd "pandoc -s -f html -t markdown %s")
+
+;; pointing pandoc to a webm does NOT go well (just hangs forever)
+(fn skip? [url] (or (url:find "%.webm$") (url:find "%.mp[34]$")))
+
+(fn index-url [db url now]
+  (when (and (needs-refresh? db url now)
+             (not (skip? url)))
+    (log :fetching)
+    (with-open [pandoc (assert (io.popen (pandoc-cmd:format url)))]
+      (let [sql (insert-sql db url
+                            (extract-metadata (pandoc:read :*all) now))]
+        (assert (db:execute sql))))))
+
 (fn index [file now]
-  (let [db (init)
-        pandoc-cmd "pandoc -s -f html -t markdown %s"]
+  (let [db (init)]
     (each [line (io.lines file)]
       (let [url (line:match "([^ ]+)")]
-        (when (needs-refresh? db url now)
-          (log :fetching)
-          (with-open [pandoc (assert (io.popen (pandoc-cmd:format url)))]
-            (let [sql (insert-sql db url
-                                  (extract-metadata (pandoc:read :*all) now))]
-              (assert (db:execute sql)))))))))
+        (index-url db url now)))))
 
-{: results : index : extract-metadata}
+{: results : index}
