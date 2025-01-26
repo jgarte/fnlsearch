@@ -14,6 +14,14 @@ Run server:
 
     fennel main.fnl start 8080
 
+## Schema
+
+* url
+* title
+* body
+* last crawled
+* source
+
 ## License
 
 Copyright © 2025 Phil Hagelberg

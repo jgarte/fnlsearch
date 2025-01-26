@@ -39,5 +39,5 @@
                      (: :start {: port}))
   _ (do (io.stderr:write "USAGE:
 fennel main.fnl start PORT
-fennel main.fnl index URL_FILE")
+fennel main.fnl index URL_FILE\n")
         (os.exit 1)))

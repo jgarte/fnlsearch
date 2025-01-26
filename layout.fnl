@@ -14,6 +14,8 @@
           [:div {:id "contents"} ...]
           [:footer {}
            [:p {} "site © 2025 Phil Hagelberg, contents of search results "
-            "are copyright their authors"]]]]))
+            "are copyright their authors"]
+           [:p {} [:a {:href "https://git.sr.ht/~technomancy/search"}
+                   "site source"]]]]]))
 
 {: layout}
