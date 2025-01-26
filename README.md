@@ -1,6 +1,6 @@
 # Technomancy Search
 
-My own personal search engine.
+My own [personal search engine](https://search.technomancy.us).
 
 Installation:
 
@@ -20,6 +20,7 @@ Run server:
 * [x] web UI
 * [x] save titles in index
 * [x] partial reindexing
+* [x] robots.txt
 * [ ] ranking
 * [-] source URLs from
   * [x] gotosocial database
@@ -49,3 +50,5 @@ Dependencies:
 * [luv](https://github.com/luvit/luv) (dependency of moonmint, use apt or whatever)
 * [lua-sql](https://lunarmodules.github.io/luasql/)
 * [pandoc](https://pandoc.org)
+* [curl](https://curl.se)
+* [RobotsTXT](https://zadzmo.org/code/robotstxt/)
