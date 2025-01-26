@@ -14,6 +14,14 @@ Run server:
 
     fennel main.fnl start 8080
 
+## Todo
+
+* [x] indexing
+* [x] web UI
+* [x] save titles in index
+* [x] partial reindexing
+* [ ] more URL sources
+
 ## Schema
 
 * url

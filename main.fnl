@@ -33,7 +33,7 @@
 (router:get "/reload" reload)
 
 (case arg
-  ["index" file] (search.index file)
+  ["index" file] (search.index file (os.time))
   ["start" port] (-> (moonmint)
                      (: :use router)
                      (: :start {: port}))
