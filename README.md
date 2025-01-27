@@ -20,7 +20,14 @@ Run server:
 * [x] web UI
 * [x] save titles in index
 * [x] partial reindexing
-* [x] robots.txt
+* [x] honor robots.txt
+* [x] stack traces
+* [x] serve robots.txt
+* [x] error responses for 404 and 500 (moonmint bug)
+* [ ] use moonmint agent for fetching
+* [ ] use moonmint url module
+* [ ] tests
+* [ ] capabilitize
 * [ ] ranking
 * [-] source URLs from
   * [x] gotosocial database

@@ -1,3 +1,4 @@
+(local fennel (require :fennel))
 (local lume (require :lume))
 (local moonmint (require :moonmint))
 (local router ((require :moonmint.router)))
@@ -7,6 +8,8 @@
 (local layout (require :layout))
 (local search (require :search))
 (local gts (require :gts))
+
+(set debug.traceback fennel.traceback)
 
 (local form [:form {:action "/q" :method "GET"}
              [:input {:type "text" :name "q" :placeholder "query"}]
@@ -21,6 +24,7 @@
 
 (fn search-html [{: rawQuery}]
   (let [query (url.queryDecode rawQuery)]
+    (print :Q query.q)
     (response (layout.layout [:p {} "Results for" [:kbd {} query.q]]
                              (icollect [_ r (ipairs (search.results query))
                                         &into [:ul {}]]
@@ -28,9 +32,13 @@
                              form
                              [:p {} [:a {:href "/"} "home"]]))))
 
+(fn robots [] (response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
+
 (router:get "/" home)
 (router:get "/q" search-html)
 (router:get "/reload" reload)
+(router:get "/robots.txt" robots)
+(router:get "/error" (fn [] (error "oh no")))
 
 (case arg
   ["index" file] (search.index file (os.time))

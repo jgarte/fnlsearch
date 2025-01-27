@@ -77,6 +77,15 @@ local function makeResponseHead(res)
     return head
 end
 
+local function defaultOnErr(msg)
+    if debug then
+        print(debug.traceback(msg))
+    else
+        print(msg)
+    end
+    return {status=500, body=msg}
+end
+
 local function onConnect(self, binding, socket)
     local rawRead, rawWrite, close = wrapStream(socket)
     local read, updateDecoder = coroWrap.reader(rawRead, httpCodec.decoder())
@@ -103,10 +112,13 @@ local function onConnect(self, binding, socket)
             version = head.version,
             keepAlive = head.keepAlive
         }
-        local res = self._router:doRoute(req)
-        if type(res) ~= 'table' then
-            break
-        end
+
+        local onErr = binding.errHand or defaultOnErr
+        local _, res = xpcall(function()
+              return self._router:doRoute(req)
+        end, onErr)
+        if res == nil then res = {status=404, body="not found"} end
+        if type(res) ~= 'table' then break end
         -- Write response
         write(makeResponseHead(res))
         local body = res.body
@@ -183,28 +195,13 @@ function Server:startLater(options)
             socketWrap = function(x) return x end
         end
         local server = uv.new_tcp()
-        -- Set the err handler. False explicitely disables it.
-        local onErr = binding.errHand
-        if onErr == nil then
-            onErr = options.errHand
-            if onErr == nil then
-                onErr = debug and debug.traceback or print
-            end
-        end
         table.insert(self.netServers, server)
         assert(server:bind(binding.host, binding.port))
         assert(server:listen(256, function(err)
             assert(not err, err)
             local socket = uv.new_tcp()
             server:accept(socket)
-            wrap(function()
-                if onErr then
-                    return xpcall(function()
-                        return onConnect(self, binding, socketWrap(socket))
-                    end, onErr)
-                else
-                    return onConnect(self, binding, socketWrap(socket))
-                end
+            wrap(function() return onConnect(self, binding, socketWrap(socket))
             end)()
         end))
         addOnStart(binding.onStart, self, binding)
