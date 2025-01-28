@@ -7,19 +7,18 @@
 (local schema (.. "CREATE VIRTUAL TABLE pages "
                   "USING fts5(url, title, body, source, crawled_at);"))
 
-(fn init []
-  (case (io.open "data.db")
-    f (do (f:close) (: (sqlite.sqlite3) :connect "data.db"))
-    _ (-> (: (sqlite.sqlite3) :connect "data.db")
+(fn init [db-path]
+  (case (io.open db-path)
+    f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
+    _ (-> (: (sqlite.sqlite3) :connect db-path)
           (doto (: :execute schema)))))
 
-(fn results [{: q}]
-  (let [db (init)
+(λ results [db-path q]
+  (let [db (init db-path)
         query (: "SELECT distinct url, title FROM pages('%s');"
                  :format (db:escape q))
         cursor (assert (db:execute query))]
-    (icollect [url title #(cursor:fetch)]
-      [:a {:href url} title])))
+    (icollect [url title #(cursor:fetch)] [url title])))
 
 (fn extract-metadata [body now] ; pandoc gives us a metadata header
   (let [metadata (body:match "---(.*)---")
@@ -50,14 +49,13 @@
 (local robots-domains {})
 
 (fn allowed? [url]
-  (let [[domain path] [(url:match "^https://([^/]+)(.*)")]]
-    (case (. robots-domains domain)
+  (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
+    (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
           (log :allowed?))
-      _ (let [r (robots.load_stream (io.popen (.. "curl -s https://"
-                                                  domain "/robots.txt")))]
+      _ (let [r (robots.load_stream (io.popen (.. "curl -s " prefix "/robots.txt")))]
           (r:set_agent user-agent)
-          (set (. robots-domains domain) r)
+          (set (. robots-domains prefix) r)
           (allowed? url)))))
 
 (fn index-url [db url now]
@@ -71,8 +69,8 @@
                             (extract-metadata (pandoc:read :*all) now))]
         (assert (db:execute sql))))))
 
-(fn index [file now]
-  (let [db (init)]
+(λ index [file db-path now]
+  (let [db (init db-path)]
     (each [line (io.lines file)]
       (let [url (line:match "([^ ]+)")]
         (index-url db url now)

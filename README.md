@@ -8,11 +8,15 @@ Installation:
 
 Create a file of URLs, then index it with:
 
-    fennel main.fnl index /path/to/urls
+    make index URLS=/path/to/urls
 
 Run server:
 
-    fennel main.fnl start 8080
+    make run
+
+## Development
+
+Run `make test-server` in the background before `make test`.
 
 ## Todo
 
@@ -24,9 +28,12 @@ Run server:
 * [x] stack traces
 * [x] serve robots.txt
 * [x] error responses for 404 and 500 (moonmint bug)
+* [ ] put SQL somewhere better
 * [ ] use moonmint agent for fetching
 * [ ] use moonmint url module
-* [ ] tests
+* [x] tests
+  * [ ] robots.txt
+  * [ ] html generation? (how???)
 * [ ] capabilitize
 * [ ] ranking
 * [-] source URLs from

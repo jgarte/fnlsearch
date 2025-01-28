@@ -1,0 +1,2 @@
+http://localhost:8733/technomancy.html
+http://localhost:8733/leiningen.html

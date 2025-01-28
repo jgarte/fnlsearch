@@ -1,0 +1,376 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="utf-8">
+  <title>in which things once suspended are resumed - Technomancy</title>
+  <meta name="author" content="Phil Hagelberg">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="me" href="https://icosahedron.website/@technomancy">
+  <link rel="me" href="https://hey.hagelb.org/@technomancy">
+
+  <link rel="alternate" href="/atom.xml" type="application/atom+xml">
+  <link rel="stylesheet" href="https://technomancy.us/style.css">
+  <link rel="icon" type="image/png" href="/favicon.ico">
+  <script src="https://p.hagelb.org/ads.js" defer></script>
+
+  <link rel="index" href="/list" />
+  <link rel="prev" href="/201">
+  
+</head>
+<body>
+
+  <div class="container">
+    <div id="logo">
+      <a href="/list"><img src="/i/technomancy.png" alt="Technomancy" /></a>
+    </div>
+
+    <div class="row">
+      <h2 class="title"><a href="/202">in which things once suspended are resumed</a></h2>
+    </div>
+
+
+
+<p>One common question I get about coding
+  in <a href="https://fennel-lang.org">Fennel</a> is about how to
+  effectively use coroutines. Fennel runs on the Lua runtime, and Lua
+  is famous for having very few features, but having carefully
+  selected <em>just</em> the right features to include, and coroutines
+  are one of those features that give a remarkable bang for their
+  buck. But because most languages don't have them, they're often seen
+  as an advanced or confusing feature, but they're not difficult, just
+  different. Once you get a grasp on them,
+  they provide a great deal of flexibility and in many cases mitigate
+  the problem of not having OS threads on the Lua runtime.</p>
+
+<h4>What even is a coroutine?</h4>
+
+<p>In order to create a coroutine, you need a function to
+  put inside it. Here's an example in Fennel<sup><a href="#fn1"
+  name="rfn1">1</a></sup>:</p>
+
+<aside><p>This is a written version
+  of <a href="https://conf.fennel-lang.org/2024#video1">the talk I
+    gave at FennelConf 2024</a>. If you prefer video to reading, give
+    that a watch; it's about 20 minutes long.</p></aside>
+
+<pre class="code">(<span class="keyword">local</span> <span class="variable-name">c</span> (<span class="type">coroutine.create</span> (<span class="keyword">fn</span> [] 5)))
+c <span class="comment-delimiter">; </span><span class="comment">-&gt; #&lt;thread: 0x56546f8fba88&gt;</span></pre>
+
+<p>Lua calls them "threads" which is confusing, but they're not OS
+  threads. Coroutines are a form of <em>cooperative multitasking</em>
+  while OS threads are a form of <em>preemptive multitasking</em>. That
+  means that there's a scheduler which decides when to run or pause an
+  OS thread. With coroutines, it's up to you to schedule and pause
+  them. Despite some similarity to OS threads, you really don't use
+  them in the same way, so I'd hesitate to lean on that analogy too
+  hard.</p>
+
+<p>In order to run a coroutine, you use <kbd>coroutine.resume</kbd>:</p>
+
+<pre class="code">(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; true 5</span></pre>
+
+<p>In the trivial case, it behaves like a function. However, if
+  it were a function, we could call it again, but:</p>
+
+<pre class="code">(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; false "cannot resume dead coroutine"</span></pre>
+
+<p>That's because each coroutine represents a single run of a function.
+  So far it just sounds worse; a function you can only call once. Great.
+  In order for it to be interesting, we need a function that yields:</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">f</span> []
+  (<span class="type">coroutine.yield</span> 1)
+  (<span class="type">coroutine.yield</span> 2)
+  <span class="builtin">:done</span>)
+
+(<span class="keyword">local</span> <span class="variable-name">c</span> (<span class="type">coroutine.create</span> f))
+
+(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; true 1
+</span>(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; true 2
+</span>(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; true "done"
+</span>(<span class="type">coroutine.resume</span> c) <span class="comment-delimiter">; </span><span class="comment">-&gt; false "cannot resume dead coroutine"
+</span></pre>
+
+<p>Yielding is like returning, but resuming starts you back where you
+  were.  That's it! That's the whole thing. You now understand
+  coroutines; thanks for reading!</p>
+
+<p>Just kidding; there is one more thing. You can pass values into the
+  coroutine when resuming, and they will be returned by the call
+  to <kbd>coroutine.yield</kbd>. To show this, let's make a recursive
+  function that uses that return value:</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">f</span> [x] (f (<span class="keyword">+</span> x (<span class="type">coroutine.yield</span> x))))
+(<span class="keyword">local</span> <span class="variable-name">c</span> (<span class="type">coroutine.create</span> f))
+
+(<span class="type">coroutine.resume</span> c 1) <span class="comment-delimiter">; </span><span class="comment">-&gt; true    1
+</span>(<span class="type">coroutine.resume</span> c 1) <span class="comment-delimiter">; </span><span class="comment">-&gt; true    2
+</span>(<span class="type">coroutine.resume</span> c 6) <span class="comment-delimiter">; </span><span class="comment">-&gt; true    8
+</span></pre>
+
+<p>You'll notice the function never actually needs to return.
+  It can loop forever and that's fine as long as it yields.</p>
+
+<p>OK, that's it now for real this time; that's the whole
+  thing. Deceptively simple, but what can you do with it?</p>
+
+<h4>Workers working together</h4>
+
+<!-- <img src="/i/coroutines.jpg" class="right" -->
+<!--      alt="Rey is faced by enemy ships labeled: continuations are confusing, -->
+<!--      callbacks are spaghetti, no threads on my runtime. she hits them -->
+<!--      all with a single blast labeled 'coroutines'"> -->
+
+<p>Coroutines allow you to write non-blocking code that
+  still <em>looks</em> linear. Without coroutines, writing
+  non-blocking code means leaning on callbacks. Here's a simplified
+  example from a game I made
+  with <a href="https://lyonheart.us/">Matthew Lyon</a>
+  called <a href="https://technomancy.itch.io/tower-institute-of-linguistics">Tower
+  Institute of Linguistics</a>. You
+  can <a href="https://p.hagelb.org/worker.fnl.html">see the whole
+  example here</a>, but let's start by looking at one function:</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">move</span> [self target]
+  (<span class="keyword">if</span> (<span class="keyword">=</span> <span class="type">self.y</span> <span class="type">target.y</span>)
+      (<span class="keyword">set</span> <span class="type">self.x</span> (<span class="keyword">+</span> <span class="type">self.x</span> (<span class="keyword">if</span> (<span class="keyword">&lt;</span> <span class="type">self.x</span> <span class="type">target.x</span>) 1 -1)))
+      (<span class="keyword">=</span> <span class="builtin">:stairs</span> (state.map<span class="builtin">:tile-type</span> <span class="type">self.x</span> <span class="type">self.y</span>))
+      (<span class="keyword">set</span> <span class="type">self.y</span> (<span class="keyword">+</span> <span class="type">self.y</span> (<span class="keyword">if</span> (<span class="keyword">&lt;</span> <span class="type">self.y</span> <span class="type">target.y</span>) 1 -1)))
+      (move self (state.map<span class="builtin">:find-on-level</span> <span class="type">self.x</span> <span class="type">self.y</span> <span class="builtin">:stairs</span>)))
+  (<span class="type">coroutine.yield</span>)
+  (<span class="keyword">when</span> (<span class="keyword">not</span> (self<span class="builtin">:at?</span> target))
+    (move self target)))</pre>
+
+<p>Workers move with this <kbd>move</kbd> function which A) figures
+  out which direction to go, B) takes a single step in that direction,
+  C) yields, and then D) recurses if it's not done. This looks like a pretty normal recursive loop; the only difference is it's got a yield in the middle of it.</p>
+
+<p>So <kbd>move</kbd> on its own could be done not too badly with
+  callbacks. Our approach really shines as part of a more complex
+  flow.  For context, this is from a game you give orders that get
+  picked up by the workers in the game. Orders require two workers to
+  work together to accomplish them. Without blocking the main loop,
+  workers need to decide what to do next and coordinate on their
+  work. Let's look down at the <kbd>start</kbd> function that kicks
+  off a worker's logic:</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">start</span> [self]
+  <span class="comment-delimiter">;; </span><span class="comment">first check the queue of incoming orders to take
+</span>  (<span class="keyword">case</span> (<span class="type">table.remove</span> <span class="type">state.order-queue</span> 1)
+    order (take-order self order))
+  <span class="comment-delimiter">;; </span><span class="comment">next see if any other workers need help
+</span>  (<span class="keyword">case</span> (<span class="type">table.remove</span> <span class="type">state.help-queue</span> 1)
+    other-worker (give-help self other-worker))
+  <span class="comment-delimiter">;; </span><span class="comment">if you're too frustrated, leave
+</span>  (<span class="keyword">when</span> (<span class="keyword">&lt;</span> <span class="type">state.threshold</span> <span class="type">self.frustration</span>)
+    (self<span class="builtin">:leave</span> [<span class="string">"no one understands me.\nI'm tired of this."</span>]))
+  (<span class="type">coroutine.yield</span>)
+  (start self))</pre>
+
+<p>What does it mean to take an order?</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">take-order</span> [self order]
+  <span class="comment-delimiter">;; </span><span class="comment">add yourself to the help queue and set yourself to waiting
+</span>  (<span class="type">table.insert</span> <span class="type">state.help-queue</span> self)
+  (<span class="keyword">set</span> (<span class="type">self.order</span> <span class="type">self.waiting?</span>) (<span class="keyword">values</span> order true))
+  (move self order) <span class="comment-delimiter">; </span><span class="comment">remember, move yields every step of the way
+</span>  (<span class="keyword">while</span> <span class="type">self.waiting?</span>
+    (<span class="keyword">set</span> <span class="type">self.frustration</span> (<span class="keyword">+</span> <span class="type">self.frustration</span> 1))
+    (<span class="type">coroutine.yield</span>))
+  <span class="comment-delimiter">;; </span><span class="comment">once we have someone helping us, we can build
+</span>  (build-order self order false))
+
+(<span class="keyword">fn</span> <span class="function-name">build-order</span> [self order helper?]
+  (<span class="keyword">each</span> [tx ty (<span class="type">order.tiles</span> helper?)]
+    (move self {<span class="builtin">:x</span> tx <span class="builtin">:y</span> ty})
+    (self<span class="builtin">:build</span> (<span class="keyword">.</span> <span class="type">order.blueprint</span> ty tx))))</pre>
+
+<p>And how about helping?</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">give-help</span> [self other-worker]
+  <span class="comment-delimiter">;; </span><span class="comment">go to the worker you're helping (yielding the whole way)
+</span>  (move self other-worker)
+  <span class="comment-delimiter">;; </span><span class="comment">unblock them
+</span>  (<span class="keyword">set</span> <span class="type">other-worker.waiting?</span> false)
+  <span class="comment-delimiter">;; </span><span class="comment">get to building!
+</span>  (build-order self <span class="type">other-worker.order</span> true))</pre>
+
+<p>There's a little hand-waving here, like what <kbd>self.build</kbd>
+  does.  But the point is the overall flow is very clear. Now try to
+  imagine what this would look like using callbacks. You would have to
+  turn the whole thing inside out. No recursion, no loops allowed.  It
+  would not read smoothly because you'd constantly be distracted by
+  trivialities.</p>
+
+<h4>The Importance of Being Stackful</h4>
+
+<p>Other languages have similar constructs: Python and JavaScript have
+  "generator functions" which can also yield. However, generator
+  functions can only yield directly from their body. Other normal
+  functions that they call normally can't yield<sup><a href="#fn2"
+  name="rfn2">2</a></sup>. They can call other generator functions to
+  let them do a nested yield.</p>
+
+<p>Generators are a bit of a lower-level construct from
+  coroutines. However, they can serve as building blocks to implement
+  "stackless coroutines". Using macro-like tricks, you can implement
+  stackless coroutines by splitting functions into generators at their
+  yield boundaries. The advantage of this approach is that it can be
+  done at compile-time without needing any support from the underlying
+  virtual machine.</p>
+
+<p>But going stackless has one critical limitation: you can only yield
+  from a generator function. This would be fine for the worker example
+  above; we wrote all code that yielded, so we could change it to use
+  generators. If we wanted to yield from existing code that was not
+  yield-aware, on the other hand...</p>
+
+<h4>You may now resume REPLing</h4>
+
+<p>Imagine you are creating a program with a GUI toolkit and the GUI
+  library provides you with an event loop. You can't block the event
+  loop, but you want to integrate a REPL so the user can run code from
+  within the program. But when you call <kbd>fennel.repl</kbd> it
+  makes a blocking call to read from standard in. That's no
+  good—you're writing a GUI program! You can't do a blocking read, and
+  you're not using console input anyway.</p>
+
+<p>You can indicate for Fennel's repl to get its input from another
+  source without too much trouble, since it accepts an options
+  table. Let's put some canned input lines into a table and give it a
+  function that pops those lines. Once the table is empty, we'll
+  return <kbd>nil</kbd> which will get treated like an EOF, ending
+  the REPL session.</p>
+
+<pre class="code">(<span class="keyword">local</span> <span class="variable-name">lines</span> [<span class="string">"(+ 54 "</span> <span class="string">" 50 "</span> <span class="string">")"</span>])
+
+(<span class="keyword">fn</span> <span class="function-name">next-line</span> [] (<span class="type">table.remove</span> lines 1))
+
+(<span class="type">fennel.repl</span> {<span class="builtin">:readChunk</span> next-line}) <span class="comment-delimiter">; </span><span class="comment">-&gt; 104</pre>
+
+<p>But how would we wire this into a GUI? Here's an example that uses
+  <a href="https://love2d.org">LÖVE</a>, a game framework. It starts
+  out by defining one table each for input and output, then declaring
+  a drawing function, which you can just skim because isn't that
+  important for our purposes.</p>
+
+<pre class="code">(<span class="keyword">local</span> [lines input] [[] []])
+
+(<span class="keyword">fn</span> <span class="function-name">love.draw</span> []
+  (<span class="keyword">let</span> [(w h) (<span class="type">love.window.getMode</span>)
+        fh (<span class="keyword">+</span> (<span class="keyword">:</span> (<span class="type">love.graphics.getFont</span>) <span class="builtin">:getHeight</span>) 12)]
+    (<span class="keyword">each</span> [i line (<span class="builtin">ipairs</span> lines)]
+      (<span class="type">love.graphics.print</span> line 2 (<span class="keyword">*</span> i (<span class="keyword">+</span> fh 2))))
+    (<span class="type">love.graphics.line</span> 0 (<span class="keyword">-</span> h fh 4) w (<span class="keyword">-</span> h fh 4)) <span class="comment-delimiter">; </span><span class="comment">draw input
+</span>    (<span class="type">love.graphics.print</span> (<span class="type">table.concat</span> input) 9 (<span class="keyword">-</span> h fh))))</pre>
+
+<p>Output puts things into the <kbd>lines</kbd> table; input gets
+  handled by tossing text into <kbd>input</kbd>, plus we've got a
+  little helper function to clear out <kbd>input</kbd> once we're
+  ready to use it:</p>
+
+<pre class="code">(<span class="keyword">fn</span> <span class="function-name">out</span> [xs] (<span class="keyword">icollect</span> [_ x (<span class="builtin">ipairs</span> xs) <span class="builtin">:into</span> lines] x))
+
+(<span class="keyword">fn</span> <span class="function-name">love.textinput</span> [text] (<span class="type">table.insert</span> input text))
+
+(<span class="keyword">fn</span> <span class="function-name">pop-input</span> []
+  (<span class="keyword">let</span> [text (<span class="type">table.concat</span> input)]
+    (<span class="keyword">while</span> (<span class="type">table.remove</span> input) nil) <span class="comment-delimiter">; </span><span class="comment">clear input
+</span>    (<span class="keyword">..</span> text <span class="string">"\n"</span>)))</pre>
+
+<p>Finally we wire it all together with a coroutine that runs our repl
+  function; we override the
+  output function to put things in the table, but instead of creating
+  an input function to read from our GUI elements, we just pass
+  in <kbd>coroutine.resume</kbd> directly! Finally
+  the <kbd>love.keypressed</kbd> handler responds to the user
+  pressing <kbd>enter</kbd> by <em>resuming the repl coroutine</em>
+  with the string from the input table! The repl coroutine runs until
+  it needs input, at which point it yields until the user indicates
+  the input is ready by pressing enter, resuming the coroutine with
+  the input.</p>
+
+<pre class="code">(<span class="keyword">local</span> <span class="variable-name">options</span> {<span class="builtin">:onValues</span> out <span class="builtin">:readChunk</span> <span class="type">coroutine.yield</span>})
+(<span class="keyword">local</span> <span class="variable-name">repl</span> (<span class="type">coroutine.create</span> (<span class="keyword">partial</span> <span class="type">fennel.repl</span> options)))
+
+(<span class="keyword">fn</span> <span class="function-name">love.keypressed</span> [key]
+  (<span class="keyword">case</span> key
+    <span class="builtin">:return</span> (<span class="type">coroutine.resume</span> repl (pop-input))
+    <span class="builtin">:backspace</span> (<span class="type">table.remove</span> input)))</pre>
+
+<p>So what makes this different from the previous example? Well, in
+  some senses it's simpler; it's just one loop instead of a whole
+  series of actions. But the important thing
+  is: <kbd>fennel.repl</kbd> doesn't know it's running in a coroutine!
+  All it has to do is accept whatever function we want as the "read
+  input" function<sup><a href="#fn3" name="rfn3">3</a></sup> replacing
+  reading from standard in. For the rest of the repl code, it's
+  completely irrelevant that it's going to yield waiting for
+  input.</p>
+
+<p>This technique is not possible with stackless coroutines.  So it
+  wouldn't work in Python or JavaScript, but it works great in Lua and
+  Fennel! You can turn any code into non-blocking code regardless of
+  whether it was originally written with that in mind or not. It's a
+  really powerful technique<sup><a href="#fn4" name="rfn4">4</a></sup>
+  whenever you need some flow control that goes a little outside the
+  usual. Give it a try some time!</p>
+
+<hr>
+<div class="footnotes">
+
+  <p>[<a name="fn1">1</a>] I'm using Fennel for my examples
+    because... well, it's my favorite programming language! If you
+    prefer Lua, you can take any little snippet of Fennel code and
+    put it into <a href="https://fennel-lang.org/see">See Fennel</a>
+    to find out what the equivalent Lua looks like. All the code in
+    this post is very straightforward to translate; mostly you just
+    move the parens. Remember that Lua and Fennel
+    have <a href="https://en.wikipedia.org/wiki/Tail_call">tail-call
+    optimization</a>, which our code here will use heavily.</p>
+
+  <p>[<a name="fn2">2</a>] If you've heard of "function coloring";
+    this is the same problem. See the
+    article <a href="https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/">What
+    Color is your Function?</a>.</p>
+
+  <p>[<a name="fn3">3</a>] For this to work, it's important to note
+    that <kbd>coroutine.yield</kbd> is <strong>not</strong> special
+    syntax. It's a first-class function that can be passed around as a
+    function argument, placed in a table, etc. That's why we can pass it
+    right in with the options table; no wrapper needed.</p>
+
+  <p>[<a name="fn4">4</a>] If you've ever used the
+    site <a href="https://itch.io">itch.io</a>, you've benefited from
+    this! Because itch.io is written
+    in <a href="https://moonscript.org/">MoonScript</a>, which compiles
+    to Lua. They
+    have <a href="https://leafo.net/posts/itchio-and-coroutines.html">a
+      great write-up</a> of how their I/O uses coroutines to make
+    linear-looking code run in a non-blocking way, so check that
+    out.</p>
+
+</div>
+
+ <p class="timestamp">
+  <a href="/201">&laquo; older</a> |
+  <a href="/202">2024-12-31T19:28:41</a>
+  
+    <p id="khomut">๛</p>
+
+    <div id="footer" class="row">
+      <p><a href="/list">All posts</a> |
+        <a href="/resume">R&eacute;sum&eacute;</a> |
+        <a href="/projects">Projects</a> |
+        <a href="/talks">Talks</a> |
+        <a href="/colophon">About</a> |
+        Technomancy is &copy; 2004 &ndash; 2025 Phil Hagelberg</p>
+    </div>
+    </div>
+  </body>
+</html>
+
+
+
