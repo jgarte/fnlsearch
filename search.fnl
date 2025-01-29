@@ -1,34 +1,17 @@
-(local sqlite (require :luasql.sqlite3))
 (local robots (require :robotstxt))
 (local log (if (os.getenv "DEBUG") print #nil))
+(local sql (require :sql))
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
-(local schema (.. "CREATE VIRTUAL TABLE pages "
-                  "USING fts5(url, title, body, source, crawled_at);"))
-
-(fn init [db-path]
-  (case (io.open db-path)
-    f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
-    _ (-> (: (sqlite.sqlite3) :connect db-path)
-          (doto (: :execute schema)))))
-
 (λ results [db-path q]
-  (let [db (init db-path)
-        query (: "SELECT distinct url, title FROM pages('%s');"
-                 :format (db:escape q))
-        cursor (assert (db:execute query))]
-    (icollect [url title #(cursor:fetch)] [url title])))
+  (icollect [url title (sql.query (sql.init db-path) q)]
+    [url title]))
 
 (fn extract-metadata [body now] ; pandoc gives us a metadata header
   (let [metadata (body:match "---(.*)---")
         title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
     {:crawled-at now : title : body :source "bookmarks"}))
-
-(fn insert-sql [db url {: body : title : crawled-at : source}]
-  (: "INSERT INTO pages VALUES ('%s', '%s', '%s', '%s', '%s');" :format
-     (db:escape url) (db:escape (or title url)) (db:escape body)
-     (db:escape source) (db:escape crawled-at)))
 
 (local stale-time 604800) ; 1 week
 
@@ -65,16 +48,14 @@
     (log :GET url)
     ;; TODO: error handling
     (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent url)))]
-      (let [sql (insert-sql db url
-                            (extract-metadata (pandoc:read :*all) now))]
-        (assert (db:execute sql))))))
+      (sql.insert-page db url (extract-metadata (pandoc:read :*all) now)))))
 
-(λ index [file db-path now]
-  (let [db (init db-path)]
+(λ index [file db-path now ?slowly?]
+  (let [db (sql.init db-path)]
     (each [line (io.lines file)]
       (let [url (line:match "([^ ]+)")]
         (index-url db url now)
-        (when (os.getenv "SLOW")
+        (when ?slowly?
           (os.execute "sleep 1"))))))
 
 {: results : index}
