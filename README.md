@@ -32,7 +32,7 @@ Run `make test-server` in the background before `make test`.
 * [ ] use moonmint agent for fetching
 * [ ] use moonmint url module
 * [x] tests
-  * [ ] robots.txt
+  * [x] robots.txt
   * [ ] html generation? (how???)
 * [ ] capabilitize
 * [ ] ranking

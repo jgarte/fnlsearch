@@ -24,9 +24,11 @@
         _ (assert q "query not found")
         results (search.results db-path q)
         html (layout.layout [:p {} "Results for" [:kbd {} q]]
-                            (icollect [_ [url title] (ipairs results)
-                                       &into [:ul {}]]
-                              [:li {} [:a {:href url} title]])
+                            (if (next results)
+                                (icollect [_ [url title] (ipairs results)
+                                           &into [:ul {}]]
+                                  [:li {} [:a {:href url} title]])
+                                [:p {} "Not found."])
                             form
                             [:p {} [:a {:href "/"} "home"]])]
     (print :Q q)
