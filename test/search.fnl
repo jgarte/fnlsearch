@@ -1,5 +1,6 @@
 (local t (require :test.faith))
 (local search (require :search))
+(local sql (require :sql))
 
 ;; need to run `make test-server' in the background so these URLs work
 (local urls-path "test/urls.txt")
@@ -7,12 +8,14 @@
 
 (fn test-search []
   (os.remove db-path)
-  (search.index urls-path db-path (os.time))
-  (let [results (search.results db-path "technomancy")
-        urls (collect [_ [url title] (ipairs results)] url title)]
-    (t.= "Leiningen" (. urls "http://localhost:8733/leiningen.html"))
-    (t.= "in which things once suspended are resumed - Technomancy"
-         (. urls "http://localhost:8733/technomancy.html"))
-    (t.= nil (. urls "http://localhost:8733/evil.html"))))
+  (let [caps {: io :os {:time os.time}
+              :db (sql.init db-path :search :insert)}]
+    (search.index caps urls-path)
+    (let [urls (collect [url title (caps.db:search "technomancy")]
+                 url title)]
+      (t.= "Leiningen" (. urls "http://localhost:8733/leiningen.html"))
+      (t.= "in which things once suspended are resumed - Technomancy"
+           (. urls "http://localhost:8733/technomancy.html"))
+      (t.= nil (. urls "http://localhost:8733/evil.html")))))
 
 {: test-search}

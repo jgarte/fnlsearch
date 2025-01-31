@@ -1,26 +1,30 @@
 (local sqlite (require :luasql.sqlite3))
 
-(local schema (.. "CREATE VIRTUAL TABLE pages "
-                  "USING fts5(url, title, body, source, crawled_at);"))
+(λ read [path] (with-open [f (assert (io.open path))] (f:read :*all)))
 
-(λ init [db-path]
+(λ open [db-path]
   (case (io.open db-path)
     f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
-    _ (-> (: (sqlite.sqlite3) :connect db-path)
-          (doto (: :execute schema)))))
+    _ (let [schema (read "sql/schema.sql")]
+        (-> (: (sqlite.sqlite3) :connect db-path)
+            (doto (: :execute schema))))))
 
-(λ query [db q]
-  (let [query (: "SELECT distinct url, title FROM pages('%s');"
-                 :format (db:escape q))
-        cursor (assert (db:execute query))]
+(λ search [{: conn : queries} q]
+  (let [query (queries.search:format (conn:escape q))
+        cursor (assert (conn:execute query))]
     #(cursor:fetch)))
 
-(fn insert-sql [db url body title crawled-at source]
-  (: "INSERT INTO pages VALUES ('%s', '%s', '%s', '%s', '%s');" :format
-     (db:escape url) (db:escape (or title url)) (db:escape body)
-     (db:escape source) (db:escape crawled-at)))
+(fn insert-sql [{: conn : queries} url body title crawled-at source]
+  (queries.insert:format (conn:escape url) (conn:escape (or title url))
+                         (conn:escape body) (conn:escape source)
+                         (conn:escape crawled-at)))
 
-(λ insert-page [db url {: body : title : crawled-at : source}]
-  (assert (db:execute (insert-sql db url body title crawled-at source))))
+(λ insert [db url {: body : title : crawled-at : source}]
+  (assert (db.conn:execute (insert-sql db url body title crawled-at source))))
 
-{: init : query : insert-page}
+(λ init [db-path ...]
+  {:conn (open db-path) : search : insert
+   :queries (collect [_ name (ipairs [...])]
+              name (read (string.format "sql/%s.sql" name)))})
+
+{: init}

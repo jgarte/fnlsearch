@@ -1,12 +1,7 @@
 (local robots (require :robotstxt))
 (local log (if (os.getenv "DEBUG") print #nil))
-(local sql (require :sql))
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
-
-(λ results [db-path q]
-  (icollect [url title (sql.query (sql.init db-path) q)]
-    [url title]))
 
 (fn extract-metadata [body now] ; pandoc gives us a metadata header
   (let [metadata (body:match "---(.*)---")
@@ -16,9 +11,10 @@
 (local stale-time 604800) ; 1 week
 
 (fn needs-refresh? [db url now]
+  ;; TODO: modularize
   (let [query (: "SELECT crawled_at FROM pages WHERE url = '%s'"
-                 :format (db:escape url))
-        cursor (assert (db:execute query))]
+                 :format (db.conn:escape url))
+        cursor (assert (db.conn:execute query))]
     (case (cursor:fetch)
       crawled-at (< (tonumber crawled-at) (- now stale-time))
       _ true)))
@@ -48,14 +44,14 @@
     (log :GET url)
     ;; TODO: error handling
     (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent url)))]
-      (sql.insert-page db url (extract-metadata (pandoc:read :*all) now)))))
+      (db:insert url (extract-metadata (pandoc:read :*all) now)))))
 
-(λ index [file db-path now ?slowly?]
-  (let [db (sql.init db-path)]
-    (each [line (io.lines file)]
+(λ index [{: db : os} url-file ?slowly?]
+  (let [now (os.time)]
+    (each [line (io.lines url-file)]
       (let [url (line:match "([^ ]+)")]
         (index-url db url now)
         (when ?slowly?
           (os.execute "sleep 1"))))))
 
-{: results : index}
+{: index}

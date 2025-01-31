@@ -4,6 +4,7 @@
                         " on s.account_id = a.id where a.username = '%s'"
                         " and domain is null and content like '%%https%%';"))
 
+;; TODO: rewrite to use sql
 (fn urls [db-path username]
   (let [db (: (sqlite.sqlite3) :connect db-path)
         query (status-query:format (db:escape username))
