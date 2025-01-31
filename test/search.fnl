@@ -16,6 +16,9 @@
       (t.= "Leiningen" (. urls "http://localhost:8733/leiningen.html"))
       (t.= "in which things once suspended are resumed - Technomancy"
            (. urls "http://localhost:8733/technomancy.html"))
-      (t.= nil (. urls "http://localhost:8733/evil.html")))))
+      (t.= nil (. urls "http://localhost:8733/evil.html")))
+    (let [urls (collect [url title (caps.db:search "non-blocking")]
+                 url title)]
+      (t.is (. urls "http://localhost:8733/technomancy.html")))))
 
 {: test-search}

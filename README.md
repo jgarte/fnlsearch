@@ -28,7 +28,7 @@ Run `make test-server` in the background before `make test`.
 * [x] stack traces
 * [x] serve robots.txt
 * [x] error responses for 404 and 500 (moonmint bug)
-* [ ] put SQL somewhere better
+* [x] put SQL somewhere better
 * [ ] use moonmint agent for fetching
 * [ ] use moonmint url module
 * [x] tests
