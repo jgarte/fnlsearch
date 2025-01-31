@@ -1,6 +1,6 @@
 (local fennel (require :fennel))
 (local moonmint (require :moonmint))
-(local search (require :search))
+(local index (require :index))
 (local gts (require :gts))
 (local responses (require :responses))
 (local sql (require :sql))
@@ -13,7 +13,7 @@
              :db (sql.init "data.db" :search :insert)})
 
 (case arg
-  ["index" url-file] (search.index caps url-file (os.getenv "SLOW"))
+  ["index" url-file] (index.index caps url-file (os.getenv "SLOW"))
   ["gts" db-path username] (each [url (pairs (gts.urls db-path username))]
                              (print url))
   ["start" port] (let [router (moonmint.router)]

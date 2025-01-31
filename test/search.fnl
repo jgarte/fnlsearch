@@ -1,5 +1,5 @@
 (local t (require :test.faith))
-(local search (require :search))
+(local index (require :index))
 (local sql (require :sql))
 
 ;; need to run `make test-server' in the background so these URLs work
@@ -10,7 +10,7 @@
   (os.remove db-path)
   (let [caps {: io :os {:time os.time}
               :db (sql.init db-path :search :insert)}]
-    (search.index caps urls-path)
+    (index.index caps urls-path)
     (let [urls (collect [url title (caps.db:search "technomancy")]
                  url title)]
       (t.= "Leiningen" (. urls "http://localhost:8733/leiningen.html"))
