@@ -29,8 +29,8 @@ Run `make test-server` in the background before `make test`.
 * [x] serve robots.txt
 * [x] error responses for 404 and 500 (moonmint bug)
 * [x] put SQL somewhere better
+* [ ] hugsql style SQL parameters
 * [ ] use moonmint agent for fetching
-* [ ] use moonmint url module
 * [x] tests
   * [x] robots.txt
   * [ ] html generation? (how???)
@@ -40,6 +40,7 @@ Run `make test-server` in the background before `make test`.
   * [x] gotosocial database
   * [ ] RSS feeds
   * [ ] mastodon export
+  * [ ] firefox history
 * [ ] unescape titles
 
 ## Schema
@@ -64,5 +65,4 @@ Dependencies:
 * [luv](https://github.com/luvit/luv) (dependency of moonmint, use apt or whatever)
 * [lua-sql](https://lunarmodules.github.io/luasql/)
 * [pandoc](https://pandoc.org)
-* [curl](https://curl.se)
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/)

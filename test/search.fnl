@@ -8,8 +8,8 @@
 
 (fn test-search []
   (os.remove db-path)
-  (let [caps {: io :os {:time os.time}
-              :db (sql.init db-path :search :insert)}]
+  (let [caps {: io :os {:time os.time :tmpname os.tmpname}
+              :db (sql.init db-path :search :insert :refresh)}]
     (index.index caps urls-path)
     (let [urls (collect [url title (caps.db:search "technomancy")]
                  url title)]

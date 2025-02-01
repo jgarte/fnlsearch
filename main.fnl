@@ -10,8 +10,8 @@
 
 ;; not going all-in on capabilities yet, but might as well start threading
 ;; things thru for when we do
-(local caps {: io :os {:time os.time}
-             :db (sql.init "data.db" :search :insert)})
+(local caps {: io :os {:time os.time :tmpname os.tmpname}
+             :db (sql.init "data.db" :search :insert :refresh)})
 
 (case arg
   ["index" url-file] (index.index caps url-file (os.getenv "SLOW"))
