@@ -15,7 +15,7 @@
 
 (fn search [{: db} {: rawQuery}]
   (let [{: q} (moonmint.url.queryDecode rawQuery)
-        _ (assert q "query not found")
+        _ (assert (and q (not= q "")) "query not found")
         results (icollect [url title (db:search q)]
                   [url title])
         html (layout.layout [:p {} "Results for" [:kbd {} q]]
