@@ -25,6 +25,8 @@ limitations under the License.
   tags = {"luvit", "http"}
 ]]
 
+local unpack = _G.unpack or table.unpack
+
 -- Provide a nice case insensitive interface to headers.
 -- Pulled from https://github.com/creationix/weblit/blob/master/libs/weblit-app.lua
 local headerMeta = {

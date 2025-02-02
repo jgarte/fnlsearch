@@ -1,8 +1,9 @@
 GTS_DB ?= /var/gotosocial/sqlite.db
 GTS_USERNAME ?= technomancy
 URLS ?= urls.txt
+PORT ?= 8082
 
-run: ; fennel main.fnl start 8082
+run: ; fennel main.fnl start $(PORT)
 index: ; fennel main.fnl index $(URLS)
 count: ; cloc *fnl
 test: ; fennel test/faith.fnl --tests test.search

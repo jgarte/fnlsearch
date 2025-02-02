@@ -14,6 +14,27 @@ Run server:
 
     make run
 
+## How does it work???
+
+Well, it's very simple you see.
+
+You start out with a file that contains a list of URLs. Maybe it's
+your bookmarks file that you've been lovingly collecting over the past
+9 years. Maybe you got it from grepping some archive you found. Maybe
+it came from an RSS feed? Or you could extract it from your social
+media account (we can help with that one, maybe). Doesn't matter.
+
+Point the indexer at this file, and it will crawl it. For each
+successfully-fetched response, if it's text, it will toss it straight
+into SQLite's [full-text search](https://www.sqlite.org/fts5.html). If
+it's HTML, it'll pass it thru [pandoc](https://pandoc.org) first to
+get something a little more palatable.
+
+Once the indexing is done, you can launch a web server that will serve
+up a search page and give you responses in your browser! You probably
+want to put [Caddy](https://caddyserver.com/) in front of it to give
+it TLS, but this isn't strictly required.
+
 ## Development
 
 Run `make test-server` in the background before `make test`.
@@ -30,12 +51,12 @@ Run `make test-server` in the background before `make test`.
 * [x] error responses for 404 and 500 (moonmint bug)
 * [x] put SQL somewhere better
 * [ ] hugsql style SQL parameters
-* [ ] use moonmint agent for fetching
+* [x] use moonmint agent for fetching
 * [x] tests
   * [x] robots.txt
   * [ ] html generation? (how???)
 * [ ] capabilitize
-* [ ] ranking
+* [-] ranking
 * [-] source URLs from
   * [x] gotosocial database
   * [ ] RSS feeds
@@ -65,4 +86,4 @@ Dependencies:
 * [luv](https://github.com/luvit/luv) (dependency of moonmint, use apt or whatever)
 * [lua-sql](https://lunarmodules.github.io/luasql/)
 * [pandoc](https://pandoc.org)
-* [RobotsTXT](https://zadzmo.org/code/robotstxt/)
+* [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)

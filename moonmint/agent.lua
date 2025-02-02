@@ -39,6 +39,7 @@ local coroWrap = require 'moonmint.deps.coro-wrapper'
 local wrapStream = require 'moonmint.deps.stream-wrap'
 local setmetatable = setmetatable
 local match = string.match
+local unpack = _G.unpack or table.unpack
 
 -- Pulled from coro-net
 local function makeCallback(timeout)

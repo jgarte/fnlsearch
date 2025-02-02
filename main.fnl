@@ -14,7 +14,8 @@
              :db (sql.init "data.db" :search :insert :refresh)})
 
 (case arg
-  ["index" url-file] (index.index caps url-file (os.getenv "SLOW"))
+  ["index" url-file source] (index.index caps url-file source
+                                         (os.getenv "SLOW"))
   ["gts" db-path username] (each [url (pairs (gts.urls db-path username))]
                              (print url))
   ["start" port] (let [router (moonmint.router)]
@@ -27,6 +28,6 @@
                        (: :start {: port})))
   _ (do (io.stderr:write "USAGE:
 fennel main.fnl start PORT
-fennel main.fnl index URL_FILE
+fennel main.fnl index URL_FILE SOURCE_NAME
 fennel main.fnl gts GTS_SQLITE_DB USERNAME\n")
         (os.exit 1)))

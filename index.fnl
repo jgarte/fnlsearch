@@ -4,11 +4,6 @@
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
-(fn extract-metadata [body now] ; pandoc gives us a metadata header
-  (let [metadata (body:match "---(.*)---")
-        title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
-    {:crawled-at now : title : body :source "bookmarks"}))
-
 (local stale-time 604800) ; 1 week
 
 (fn needs-refresh? [db url now]
@@ -18,9 +13,6 @@
 
 (local pandoc-cmd (.. "pandoc -s -f html -t markdown "
                       "--request-header User-Agent:\"%s\" %q"))
-
-;; pointing pandoc to a webm does NOT go well (just hangs forever)
-(fn skip? [url] (or (url:find "%.webm$") (url:find "%.mp[34]$")))
 
 (local robots-domains {})
 
@@ -40,26 +32,40 @@
       _ (do (get-robots prefix)
             (allowed? url)))))
 
-(fn convert-and-save [body tmp db url now]
-  ;; this is tacky; could we use luv here to stream from HTTP -> pandoc?
-  (with-open [f (io.open tmp :w)] (f:write body))
+(fn html->text [tmp]
   (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent tmp)))]
-    (db:insert url (extract-metadata (pandoc:read :*all) now)))
-  (log :indexed url))
+    (pandoc:read :*all)))
 
-(fn index-url [db url tmp now]
-  (when (and (needs-refresh? db url now)
-             (not (skip? url))
-             (allowed? url))
+(fn normalize-type [content-type]
+  (if (content-type:find "html") :html
+      (content-type:find "text") :text))
+
+(fn extract-metadata [body source] ; pandoc gives us a metadata header
+  (let [metadata (body:match "---(.*)---")
+        title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
+    {: title : body : source}))
+
+(fn index-body [body {: content-type} tmp db url now source]
+  (case (and content-type (normalize-type (content-type:lower)))
+    :text (do (db:insert url now {:title url : body : source})
+              (log :indexed-text url))
+    :html (do ; tacky; can we go straight from HTTP -> pandoc?
+            (with-open [f (io.open tmp :w)] (f:write body))
+            (db:insert url now (extract-metadata (html->text tmp) source))
+            (log :indexed url))
+    _ (log :skipped url content-type)))
+
+(fn index-url [db url tmp now source]
+  (when (and (needs-refresh? db url now) (allowed? url))
     (case (: (moonmint.agent.get url) :sendSync)
-      {:code 200 : body} (convert-and-save body tmp db url now)
+      {:code 200 : body : headers} (index-body body headers tmp db url now source)
       {: code} (log :fail code))))
 
-(λ index [{: db : os} url-file ?slowly?]
+(λ index [{: db : os} url-file source ?slowly?]
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ ]+)")
           tmp (os.tmpname)]
-      (index-url db url tmp (os.time))
+      (index-url db url tmp (os.time) source)
       (when ?slowly?
         (os.execute "sleep 1")))))
 

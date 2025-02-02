@@ -10,7 +10,7 @@
   (os.remove db-path)
   (let [caps {: io :os {:time os.time :tmpname os.tmpname}
               :db (sql.init db-path :search :insert :refresh)}]
-    (index.index caps urls-path)
+    (index.index caps urls-path "test")
     (let [urls (collect [url title (caps.db:search "technomancy")]
                  url title)]
       (t.= "Leiningen" (. urls "http://localhost:8733/leiningen.html"))
