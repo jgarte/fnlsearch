@@ -37,6 +37,8 @@ it TLS, but this isn't strictly required.
 
 ## Development
 
+Install `tidy` from apt or whatever.
+
 Run `make test-server` in the background before `make test`.
 
 ## Todo
@@ -54,7 +56,7 @@ Run `make test-server` in the background before `make test`.
 * [x] use moonmint agent for fetching
 * [x] tests
   * [x] robots.txt
-  * [ ] html generation? (how???)
+  * [x] html generation?
 * [ ] capabilitize
 * [-] ranking
 * [-] source URLs from
