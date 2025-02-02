@@ -14,6 +14,9 @@ Run server:
 
     make run
 
+Originally based on this post: 
+https://hey.hagelb.org/users/technomancy/statuses/01J1AYF55SMFK81JS13S64YF5V
+
 ## How does it work???
 
 Well, it's very simple you see.
@@ -52,11 +55,11 @@ Run `make test-server` in the background before `make test`.
 * [x] serve robots.txt
 * [x] error responses for 404 and 500 (moonmint bug)
 * [x] put SQL somewhere better
-* [ ] hugsql style SQL parameters
 * [x] use moonmint agent for fetching
 * [x] tests
   * [x] robots.txt
   * [x] html generation?
+* [ ] hugsql style SQL parameters
 * [ ] capabilitize
 * [-] ranking
 * [-] source URLs from

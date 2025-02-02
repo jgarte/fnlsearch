@@ -10,7 +10,7 @@
 (fn setup-all []
   (os.remove db-path)
   (let [caps {: io :os {:time os.time :tmpname os.tmpname}
-              :db (sql.init db-path :search :insert :refresh)}]
+              :db (sql.init db-path)}]
     (index.index caps urls-path "test")
     caps))
 

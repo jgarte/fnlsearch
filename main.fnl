@@ -11,7 +11,7 @@
 ;; not going all-in on capabilities yet, but might as well start threading
 ;; things thru for when we do
 (local caps {: io :os {:time os.time :tmpname os.tmpname}
-             :db (sql.init "data.db" :search :insert :refresh)})
+             :db (sql.init "data.db")})
 
 (case arg
   ["index" url-file source] (index.index caps url-file source

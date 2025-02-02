@@ -28,9 +28,9 @@
 (λ insert [db url crawled-at {: body : title : source}]
   (assert (db.conn:execute (insert-sql db url body title crawled-at source))))
 
-(λ init [db-path ...]
+(λ init [db-path]
   {:conn (open db-path) : search : insert : refresh
-   :queries (collect [_ name (ipairs [...])]
+   :queries (collect [_ name (ipairs [:insert :search :refresh])]
               name (read (string.format "sql/%s.sql" name)))})
 
 {: init}
