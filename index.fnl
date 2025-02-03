@@ -1,6 +1,6 @@
-(local moonmint (require :moonmint))
 (local robots (require :robotstxt))
 (local log (if (os.getenv "DEBUG") print #nil))
+(local request (require :request))
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
@@ -17,18 +17,18 @@
 (local robots-domains {})
 
 (fn get-robots [prefix]
-  (case (: (moonmint.agent.get (.. prefix "/robots.txt")) :sendSync)
+  (case (request.get (.. prefix "/robots.txt"))
     nil false
-    {:code 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
-                             r (robots.load_table lines)]
-                         (r:set_agent user-agent)
-                         (set (. robots-domains prefix) r))))
+    {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
+                               r (robots.load_table lines)]
+                           (r:set_agent user-agent)
+                           (set (. robots-domains prefix) r))))
 
 (fn allowed? [url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
     (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
-          (log :allowed?))
+          (log :allowed? url))
       _ (do (get-robots prefix)
             (allowed? url)))))
 
@@ -57,9 +57,9 @@
 
 (fn index-url [db url tmp now source]
   (when (and (needs-refresh? db url now) (allowed? url))
-    (case (: (moonmint.agent.get url) :sendSync)
-      {:code 200 : body : headers} (index-body body headers tmp db url now source)
-      {: code} (log :fail code))))
+    (case (request.get url)
+      {:status 200 : body : headers} (index-body body headers tmp db url now source)
+      {: status} (log :fail status))))
 
 (λ index [{: db : os} url-file source ?slowly?]
   (each [line (io.lines url-file)]
