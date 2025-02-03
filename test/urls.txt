@@ -1,4 +1,3 @@
 http://localhost:8733/technomancy.html
 http://localhost:8733/leiningen.html
 http://localhost:8733/evil.html
-https://search.technomancy.us

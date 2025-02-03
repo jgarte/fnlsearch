@@ -20,7 +20,9 @@
         ;; doesn't let you set cert verification
         out []
         sink #(doto out (table.insert $))
-        (_ status headers) (req {: url : sink :verify :peer : cafile})]
-    {:body (table.concat out "\n") : status : headers}))
+        (ok? status headers) (req {: url : sink :verify :peer : cafile})]
+    (if ok?
+        {:body (table.concat out "\n") : status : headers}
+        {:status -100 :body status})))
 
 {: get}
