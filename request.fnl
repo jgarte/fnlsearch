@@ -4,25 +4,19 @@
 ;; * lua-curl requires lua 5.1 or 5.2
 ;; * lua-http doesn't work with 5.4
 ;; * luasec does not validate certs by default
+;; * love2d's lua-https is not packaged in apt and is not documented
 
-;; of these, I've chosen to work around the terrible defaults in lua-sec, but
-;; I can't really recommend it because if they can't even get something as basic
-;; as this right there's probably a bunch of other problems lurking.
+;; of these, for the simple kind of requests we are making here, love2d's client
+;; poses the least severe problems
 
-(local https (require :ssl.https))
-(local http (require :socket.http))
+(local https (require :https))
 
-(local cafile "/etc/ssl/certs/ca-certificates.crt")
+(fn normalize-headers [headers]
+  (collect [k v (pairs headers)] (k:lower) v))
 
 (fn get [url]
-  (let [req (if (url:find "^https://") https.request http.request)
-        ;; the ltn12 API sucks but you have to use it because the simple API
-        ;; doesn't let you set cert verification
-        out []
-        sink #(doto out (table.insert $))
-        (ok? status headers) (req {: url : sink :verify :peer : cafile})]
-    (if ok?
-        {:body (table.concat out "\n") : status : headers}
-        {:status -100 :body status})))
+  ;; with one arg, it gives us a "simplified" response which omits headers
+  (let [(status body headers) (https.request url {})]
+    {: status : body :headers (normalize-headers headers)}))
 
 {: get}

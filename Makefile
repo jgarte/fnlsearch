@@ -5,10 +5,10 @@ PORT ?= 8082
 SRC=*.fnl
 DEPS=moonmint lume.lua robotstxt.lua
 
-run: ; fennel main.fnl start $(PORT)
+run: https.so; fennel main.fnl start $(PORT)
+test: https.so; fennel test/faith.fnl --tests test test.request
 index: ; fennel main.fnl index $(URLS)
 count: ; cloc $(SRC) ; cloc $(DEPS)
-test: ; fennel test/faith.fnl --tests test test.request
 lint: ; fennel-ls --lint *.fnl
 
 urls.txt: ; fennel main.fnl gts $(GTS_DB) $(GTS_USERNAME) > $@
