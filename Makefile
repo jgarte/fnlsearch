@@ -16,7 +16,7 @@ urls.txt: ; fennel main.fnl gts $(GTS_DB) $(GTS_USERNAME) > $@
 update-moonmint: ; rsync -r ../moonmint/moonmint/ moonmint/
 
 lua-https/build/https.so:
-	git submodule update
+	git submodule update --init
 	cd lua-https && cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=$(PWD)/lua-https/build
 	cd lua-https && cmake --build build --target install

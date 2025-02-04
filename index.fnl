@@ -61,12 +61,12 @@
       {:status 200 : body : headers} (index-body body headers tmp db url now source)
       {: status} (log :fail status))))
 
-(λ index [{: db : os} url-file source ?slowly?]
+(λ index [{: db : os : sleep} url-file source ?slowly?]
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ ]+)")
           tmp (os.tmpname)]
       (index-url db url tmp (os.time) source)
       (when ?slowly?
-        (os.execute "sleep 1")))))
+        (sleep)))))
 
 {: index}
