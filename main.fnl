@@ -8,11 +8,12 @@
 
 (set debug.traceback fennel.traceback)
 
+(local log (if (os.getenv "DEBUG") print #nil))
+
 ;; not going all-in on capabilities yet, but might as well start threading
 ;; things thru for when we do
-(local caps {: io :os {:time os.time :tmpname os.tmpname}
-             :db (sql.init "data.db")
-             :sleep #(os.execute "sleep 1")})
+(local caps {: io :os {:time os.time :tmpname os.tmpname} : log
+             :db (sql.init "data.db") :sleep #(os.execute "sleep 1")})
 
 (case arg
   ["index" url-file source] (index.index caps url-file source

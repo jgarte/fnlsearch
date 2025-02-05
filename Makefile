@@ -7,7 +7,7 @@ DEPS=moonmint lume.lua robotstxt.lua
 
 run: https.so; fennel main.fnl start $(PORT)
 test: https.so; fennel test/faith.fnl --tests test test.request
-index: ; fennel main.fnl index $(URLS)
+index: ; fennel main.fnl index $(URLS) $(URLS)
 count: ; cloc $(SRC) ; cloc $(DEPS)
 lint: ; fennel-ls --lint *.fnl
 

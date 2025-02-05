@@ -1,5 +1,4 @@
 (local robots (require :robotstxt))
-(local log (if (os.getenv "DEBUG") print #nil))
 (local request (require :request))
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
@@ -18,19 +17,19 @@
 
 (fn get-robots [prefix]
   (case (request.get (.. prefix "/robots.txt"))
-    nil false
+    nil true
     {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
                                r (robots.load_table lines)]
                            (r:set_agent user-agent)
                            (set (. robots-domains prefix) r))))
 
-(fn allowed? [url]
+(fn allowed? [log url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
     (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
           (log :allowed? url))
-      _ (do (get-robots prefix)
-            (allowed? url)))))
+      _ (or (get-robots prefix)
+            (allowed? log url)))))
 
 (fn html->text [tmp]
   (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent tmp)))]
@@ -45,7 +44,7 @@
         title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
     {: title : body : source}))
 
-(fn index-body [body {: content-type} tmp db url now source]
+(fn index-body [log body {: content-type} tmp db url now source]
   (case (and content-type (normalize-type (content-type:lower)))
     :text (do (db:insert url now {:title url : body : source})
               (log :indexed-text url))
@@ -55,17 +54,19 @@
             (log :indexed url))
     _ (log :skipped url content-type)))
 
-(fn index-url [db url tmp now source]
-  (when (and (needs-refresh? db url now) (allowed? url))
+(fn index-url [db log url tmp now source]
+  (log :indexing url)
+  (when (and (needs-refresh? db url now) (allowed? log url))
     (case (request.get url)
-      {:status 200 : body : headers} (index-body body headers tmp db url now source)
+      {:status 200 : body : headers} (index-body log body headers
+                                                 tmp db url now source)
       {: status} (log :fail status))))
 
-(λ index [{: db : os : sleep} url-file source ?slowly?]
+(λ index [{: db : os : sleep : log} url-file source ?slowly?]
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ ]+)")
           tmp (os.tmpname)]
-      (index-url db url tmp (os.time) source)
+      (index-url db log url tmp (os.time) source)
       (when ?slowly?
         (sleep)))))
 
