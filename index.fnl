@@ -17,11 +17,11 @@
 
 (fn get-robots [prefix]
   (case (request.get (.. prefix "/robots.txt"))
-    nil true
     {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
                                r (robots.load_table lines)]
                            (r:set_agent user-agent)
-                           (set (. robots-domains prefix) r))))
+                           (set (. robots-domains prefix) r))
+    _ true))
 
 (fn allowed? [log url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]

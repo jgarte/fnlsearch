@@ -25,8 +25,8 @@
                          (conn:escape body) (conn:escape source)
                          (conn:escape crawled-at)))
 
-(λ insert [db url crawled-at {: body : title : source}]
-  (assert (db.conn:execute (insert-sql db url body title crawled-at source))))
+(λ insert [db url crawled-at {: body :title ?title : source}]
+  (assert (db.conn:execute (insert-sql db url body ?title crawled-at source))))
 
 (λ init [db-path]
   {:conn (open db-path) : search : insert : refresh
