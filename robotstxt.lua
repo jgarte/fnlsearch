@@ -116,8 +116,9 @@ end
 
 local p_Any = lp.P('*')
 local p_White = lp.P(' ', '	')
-local p_String = (lp.R('az', 'AZ', '09') + lp.S('_-/:*') + p_White)
+local p_String = (lp.R('az', 'AZ', '09') + lp.S('_-/:*') + p_White + p_Any)
 local p_Number = lp.C(lp.R('09')^1)
+local p_End = -lp.P(1)
 
 local p_Agent = lp.C(p_String^1 + p_Any)
 local p_Url = lp.C((p_String + lp.S('/*?.=&:$+-{}%'))^1)
@@ -134,7 +135,7 @@ local l_Disallow = d_Disallow * p_White * p_Url
 local l_SiteMap = d_SiteMap * p_White * p_Url
 local l_Delay = d_Delay * p_White * p_Number
 
-local Line = l_Agent + l_Allow + l_Disallow + l_SiteMap + l_Delay
+local Line = (l_Agent + l_Allow + l_Disallow + l_SiteMap + l_Delay) * p_End
 
 
 

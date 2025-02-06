@@ -1,3 +1,5 @@
 user-agent: *
 allow: *
 disallow: /evil
+# this should not match /leiningen.html but robotstxt.lua had a bug...
+Disallow: /leiningen無
