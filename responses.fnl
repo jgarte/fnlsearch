@@ -13,7 +13,7 @@
   (lume.hotswap :search)
   (moonmint.response.redirect "/"))
 
-(fn search [{: db} {: rawQuery} ?quiet]
+(fn search [{: db : log} {: rawQuery}]
   (let [{: q} (moonmint.url.queryDecode rawQuery)
         _ (assert (and q (not= q "")) "query not found")
         results (icollect [url title (db:search q)]
@@ -26,7 +26,7 @@
                                 [:p {} "Not found."])
                             form
                             [:p {} [:a {:href "/"} "home"]])]
-    (when (not ?quiet) (print :Q q))
+    (log :Q q)
     (moonmint.response html)))
 
 (fn robots [_caps]

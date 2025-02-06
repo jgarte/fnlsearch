@@ -23,13 +23,13 @@
                            (set (. robots-domains prefix) r))
     _ true))
 
-(fn allowed? [log url]
+(fn allowed? [dbg url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
     (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
-          (log :allowed? url))
+          (dbg :allowed? url))
       _ (or (get-robots prefix)
-            (allowed? log url)))))
+            (allowed? dbg url)))))
 
 (fn html->text [tmp]
   (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent tmp)))]
@@ -44,29 +44,30 @@
         title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
     {: title : body : source}))
 
-(fn index-body [log body {: content-type} tmp db url now source]
+(fn index-body [dbg body {: content-type} tmp db url now source]
   (case (and content-type (normalize-type (content-type:lower)))
     :text (do (db:insert url now {:title url : body : source})
-              (log :indexed-text url))
-    :html (do ; tacky; can we go straight from HTTP -> pandoc?
-            (with-open [f (io.open tmp :w)] (f:write body))
-            (db:insert url now (extract-metadata (html->text tmp) source))
-            (log :indexed url))
-    _ (log :skipped url content-type)))
+              (dbg :indexed-text url))
+    :html (do (with-open [f (io.open tmp :w)] (f:write body))
+              (db:insert url now (extract-metadata (html->text tmp) source))
+              (dbg :indexed url))
+    _ (dbg :skipped url content-type)))
 
-(fn index-url [db log url tmp now source]
-  (log :indexing url)
-  (when (and (needs-refresh? db url now) (allowed? log url))
+(fn skip? [url] (or (url:find "%.mp4$") (url:find "%.webm$")))
+
+(fn index-url [db dbg url tmp now source]
+  (dbg :indexing url)
+  (when (and (needs-refresh? db url now) (allowed? dbg url) (not (skip? url)))
     (case (request.get url)
-      {:status 200 : body : headers} (index-body log body headers
+      {:status 200 : body : headers} (index-body dbg body headers
                                                  tmp db url now source)
-      {: status} (log :fail status))))
+      {: status} (dbg :fail status))))
 
-(λ index [{: db : os : sleep : log} url-file source ?slowly?]
+(λ index [{: db : os : sleep : dbg} url-file source ?slowly?]
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ ]+)")
           tmp (os.tmpname)]
-      (index-url db log url tmp (os.time) source)
+      (index-url db dbg url tmp (os.time) source)
       (when ?slowly?
         (sleep)))))
 
