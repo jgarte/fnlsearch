@@ -11,15 +11,16 @@
 
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname}
                                   :io {:open {:write ["/tmp/"]
-                                              :read ["data.db" "*.txt"
+                                              :read ["data.db" "*.txt" "about.html"
                                                      "sql/" "/tmp/"]}
                                        :stdin io.stdin
                                        :lines io.lines
                                        :popen ["pandoc"]}}
                               {: dbg : log : moonmint
+                               :about-html (with-open [f (io.open "about.html")]
+                                             (f:read :*all))
                                :sleep #(os.execute "sleep 1")
                                :robotstxt (require :robotstxt)
-                               :hotswap (. (require :lume) :hotswap)
                                :sqlite (require :luasql.sqlite3)}))
 
 (local arg _G.arg)
@@ -42,7 +43,7 @@
   ["start" port] (let [router (moonmint.router)]
                    (router:get "/" (partial responses.home caps))
                    (router:get "/q" (partial responses.search caps))
-                   (router:get "/reload" (partial responses.reload caps))
+                   (router:get "/about" (partial responses.about caps))
                    (router:get "/robots.txt" (partial responses.robots caps))
                    (-> (moonmint)
                        (: :use router)

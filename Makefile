@@ -2,8 +2,8 @@ GTS_DB ?= /var/gotosocial/sqlite.db
 GTS_USERNAME ?= technomancy
 URLS ?= urls.txt
 PORT ?= 8082
-SRC=html.fnl layout.fnl request.fnl sql.fnl gts.fnl index.fnl main.fnl responses.fnl
-DEPS=moonmint lume.lua robotstxt.lua capabilities.fnl
+SRC=html.fnl request.fnl sql.fnl gts.fnl index.fnl main.fnl responses.fnl
+DEPS=moonmint robotstxt.lua capabilities.fnl
 
 run: https.so; fennel main.fnl start $(PORT)
 test: https.so; fennel test/faith.fnl --tests test

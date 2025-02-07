@@ -60,6 +60,8 @@ Run `make test-server` in the background before `make test`.
   * [x] robots.txt
   * [x] html generation?
 * [x] capabilitize
+* [x] about page
+* [ ] repl
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
 * [ ] cache failures
@@ -89,7 +91,6 @@ Dependencies:
 
 * [fennel](https://fennel-lang.org)
 * [moonmint](https://github.com/bakpakin/moonmint) (included)
-* [lume](https://github.com/rxi/lume) (included)
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)
 * [capabilities.fnl](https://git.sr.ht/~technomancy/capabilities.fnl) (included)
 * [lua-https](https://github.com/love2d/lua-https) (submodule)
