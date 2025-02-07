@@ -1,3 +1,4 @@
+(local fennel (require :fennel))
 (local t (require :test.faith))
 (local index (require :index))
 (local responses (require :responses))
@@ -27,12 +28,9 @@
     (t.= "in which things once suspended are resumed - Technomancy"
          (. urls "http://localhost:8733/technomancy.html"))
     (t.= nil (. urls "http://localhost:8733/evil.html")))
-  (let [urls (collect [url title (caps.db:search "non-blocking")]
-               url title)]
-    (t.is (. urls "http://localhost:8733/technomancy.html")))
-  (let [urls (collect [url title (caps.db:search "non.blocking")]
-               url title)]
-    (t.is (. urls "http://localhost:8733/technomancy.html"))))
+  (each [_ q (ipairs ["non-blocking" "non.blocking" "blocking!"])]
+    (t.is (pick-values 1 ((caps.db:search q)))
+          (.. "expected results from " q))))
 
 (fn tidy? [{: body}]
   (let [tidy (io.popen "tidy -q -e -" :w)]

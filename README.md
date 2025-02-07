@@ -62,6 +62,7 @@ Run `make test-server` in the background before `make test`.
 * [x] capabilitize
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
+* [ ] cache failures
 * [-] ranking
 * [-] source URLs from
   * [x] gotosocial database

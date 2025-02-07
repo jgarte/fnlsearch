@@ -9,7 +9,7 @@
 
 (λ search [{: conn : queries} q]
   ;; I'm sure there are other things we need to remove, but for now...
-  (let [query (queries.search:format (conn:escape (q:gsub "[-%.]" " ")))
+  (let [query (queries.search:format (conn:escape (q:gsub "[-!%.]" " ")))
         cursor (assert (conn:execute query))]
     #(cursor:fetch)))
 
