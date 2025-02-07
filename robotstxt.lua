@@ -114,14 +114,15 @@ local function set_directive( s )
 end
 
 
+lp.locale( lp )
+
 local p_Any = lp.P('*')
-local p_White = lp.P(' ', '	')
-local p_String = (lp.R('az', 'AZ', '09') + lp.S('_-/:*') + p_White + p_Any)
-local p_Number = lp.C(lp.R('09')^1)
-local p_End = -lp.P(1)
+local p_All = lp.P(1)^1
+local p_String = (lp.alnum + lp.S('_-/:*') + lp.space)
+local p_Number = lp.C(lp.digit^1)
 
 local p_Agent = lp.C(p_String^1 + p_Any)
-local p_Url = lp.C((p_String + lp.S('/*?.=&:$+-{}%'))^1)
+local p_Url = lp.C(p_All)
 
 local d_Agent = set_directive('User-agent')
 local d_Delay = set_directive('Crawl-delay')
@@ -129,13 +130,13 @@ local d_Allow = set_directive('Allow')
 local d_Disallow = set_directive('Disallow')
 local d_SiteMap = set_directive('SiteMap')
 
-local l_Agent = d_Agent * p_White * p_Agent
-local l_Allow = d_Allow * p_White * p_Url
-local l_Disallow = d_Disallow * p_White * p_Url
-local l_SiteMap = d_SiteMap * p_White * p_Url
-local l_Delay = d_Delay * p_White * p_Number
+local l_Agent = d_Agent * lp.space * p_Agent
+local l_Allow = d_Allow * lp.space * p_Url
+local l_Disallow = d_Disallow * lp.space * p_Url
+local l_SiteMap = d_SiteMap * lp.space * p_Url
+local l_Delay = d_Delay * lp.space * p_Number
 
-local Line = (l_Agent + l_Allow + l_Disallow + l_SiteMap + l_Delay) * p_End
+local Line = l_Agent + l_Allow + l_Disallow + l_SiteMap + l_Delay
 
 
 
