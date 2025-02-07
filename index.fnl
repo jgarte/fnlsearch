@@ -1,6 +1,3 @@
-(local robots (require :robotstxt))
-(local request (require :request))
-
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
 (local stale-time 604800) ; 1 week
@@ -15,23 +12,23 @@
 
 (local robots-domains {})
 
-(fn get-robots [prefix]
+(fn get-robots [request robotstxt prefix]
   (case (request.get (.. prefix "/robots.txt"))
     {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
-                               r (robots.load_table lines)]
+                               r (robotstxt.load_table lines)]
                            (r:set_agent user-agent)
                            (set (. robots-domains prefix) r))
     _ true))
 
-(fn allowed? [dbg url]
+(fn allowed? [request robotstxt dbg url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
     (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
           (dbg :allowed? url))
-      _ (or (get-robots prefix)
-            (allowed? dbg url)))))
+      _ (or (get-robots request robotstxt prefix)
+            (allowed? request robotstxt dbg url)))))
 
-(fn html->text [tmp]
+(fn html->text [io tmp]
   (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent tmp)))]
     (pandoc:read :*all)))
 
@@ -44,30 +41,32 @@
         title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
     {: title : body : source}))
 
-(fn index-body [dbg body {: content-type} tmp db url now source]
+(fn index-body [io dbg body {: content-type} tmp db url now source]
   (case (and content-type (normalize-type (content-type:lower)))
     :text (do (db:insert url now {:title url : body : source})
               (dbg :indexed-text url))
     :html (do (with-open [f (io.open tmp :w)] (f:write body))
-              (db:insert url now (extract-metadata (html->text tmp) source))
+              (db:insert url now (extract-metadata (html->text io tmp) source))
               (dbg :indexed url))
     _ (dbg :skipped url content-type)))
 
 (fn skip? [url] (or (url:find "%.mp4$") (url:find "%.webm$")))
 
-(fn index-url [db dbg url tmp now source]
+(fn index-url [{: io : db : dbg : request : robotstxt} url tmp now source]
   (dbg :indexing url)
-  (when (and (needs-refresh? db url now) (allowed? dbg url) (not (skip? url)))
+  (when (and (needs-refresh? db url now) (allowed? request robotstxt dbg url)
+             (not (skip? url)))
     (case (request.get url)
-      {:status 200 : body : headers} (index-body dbg body headers
+      {:status 200 : body : headers} (index-body io dbg body headers
                                                  tmp db url now source)
       {: status} (dbg :fail status))))
 
-(λ index [{: db : os : sleep : dbg} url-file source ?slowly?]
+(λ index [{: os : sleep : io &as caps}
+          url-file source ?slowly?]
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ ]+)")
           tmp (os.tmpname)]
-      (index-url db dbg url tmp (os.time) source)
+      (index-url caps url tmp (os.time) source)
       (when ?slowly?
         (sleep)))))
 

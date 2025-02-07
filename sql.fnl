@@ -1,17 +1,15 @@
-(local sqlite (require :luasql.sqlite3))
+(λ read [io path] (with-open [f (assert (io.open path))] (f:read :*all)))
 
-(λ read [path] (with-open [f (assert (io.open path))] (f:read :*all)))
-
-(λ open [db-path]
+(λ open [io sqlite db-path]
   (case (io.open db-path)
     f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
-    _ (let [schema (read "sql/schema.sql")]
+    _ (let [schema (read io "sql/schema.sql")]
         (-> (: (sqlite.sqlite3) :connect db-path)
             (doto (: :execute schema))))))
 
 (λ search [{: conn : queries} q]
   ;; I'm sure there are other things we need to remove, but for now...
-  (let [query (queries.search:format (conn:escape (q:gsub "-" " ")))
+  (let [query (queries.search:format (conn:escape (q:gsub "[-%.]" " ")))
         cursor (assert (conn:execute query))]
     #(cursor:fetch)))
 
@@ -28,9 +26,9 @@
 (λ insert [db url crawled-at {: body :title ?title : source}]
   (assert (db.conn:execute (insert-sql db url body ?title crawled-at source))))
 
-(λ init [db-path]
-  {:conn (open db-path) : search : insert : refresh
+(λ init [{: io : sqlite} db-path]
+  {:conn (open io sqlite db-path) : search : insert : refresh
    :queries (collect [_ name (ipairs [:insert :search :refresh])]
-              name (read (string.format "sql/%s.sql" name)))})
+              name (read io (string.format "sql/%s.sql" name)))})
 
 {: init}

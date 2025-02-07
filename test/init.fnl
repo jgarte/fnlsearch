@@ -2,6 +2,7 @@
 (local index (require :index))
 (local responses (require :responses))
 (local sql (require :sql))
+(local https (require :https))
 
 ;; need to run `make test-server' in the background so these URLs work
 (local urls-path "test/urls.txt")
@@ -10,7 +11,12 @@
 (fn setup-all []
   (os.remove db-path)
   (let [caps {: io :os {:time os.time :tmpname os.tmpname}
-              :db (sql.init db-path) :log #nil :dbg #nil :sleep #nil}]
+              :log #nil :dbg #nil :sleep #nil
+              :robotstxt (require :robotstxt)
+              :sqlite (require :luasql.sqlite3)
+              :moonmint (require :moonmint)
+              :request {:get (partial (. (require :request) :get) https)}}]
+    (set caps.db (sql.init caps db-path))
     (index.index caps urls-path "test")
     caps))
 
@@ -23,6 +29,9 @@
     (t.= nil (. urls "http://localhost:8733/evil.html")))
   (let [urls (collect [url title (caps.db:search "non-blocking")]
                url title)]
+    (t.is (. urls "http://localhost:8733/technomancy.html")))
+  (let [urls (collect [url title (caps.db:search "non.blocking")]
+               url title)]
     (t.is (. urls "http://localhost:8733/technomancy.html"))))
 
 (fn tidy? [{: body}]
@@ -31,7 +40,7 @@
     (tidy:close)))
 
 (fn test-responses [caps]
-  (t.is (tidy? (responses.home)))
+  (t.is (tidy? (responses.home caps)))
   (t.is (tidy? (responses.search caps {:rawQuery "q=technomancy"} true))))
 
 {: setup-all

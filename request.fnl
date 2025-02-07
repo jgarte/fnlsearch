@@ -9,12 +9,10 @@
 ;; of these, for the simple kind of requests we are making here, love2d's client
 ;; poses the least severe problems
 
-(local https (require :https))
-
 (fn normalize-headers [headers]
   (collect [k v (pairs headers)] (k:lower) v))
 
-(fn get [url]
+(fn get [https url]
   ;; with one arg, it gives us a "simplified" response which omits headers
   (let [(status body headers) (https.request url {})]
     {: status : body :headers (normalize-headers headers)}))

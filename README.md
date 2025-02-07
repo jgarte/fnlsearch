@@ -12,7 +12,7 @@ Create a file of URLs, then index it with:
 
 Run server:
 
-    make run
+    make run PORT=8080
 
 Originally based on this post: 
 https://hey.hagelb.org/users/technomancy/statuses/01J1AYF55SMFK81JS13S64YF5V
@@ -59,8 +59,9 @@ Run `make test-server` in the background before `make test`.
 * [x] tests
   * [x] robots.txt
   * [x] html generation?
+* [x] capabilitize
 * [ ] hugsql style SQL parameters
-* [ ] capabilitize
+* [ ] cache robots?
 * [-] ranking
 * [-] source URLs from
   * [x] gotosocial database
@@ -89,6 +90,7 @@ Dependencies:
 * [moonmint](https://github.com/bakpakin/moonmint) (included)
 * [lume](https://github.com/rxi/lume) (included)
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)
+* [capabilities.fnl](https://git.sr.ht/~technomancy/capabilities.fnl) (included)
 * [lua-https](https://github.com/love2d/lua-https) (submodule)
 * [luv](https://github.com/luvit/luv) (dependency of moonmint, use apt or whatever)
 * [lua-sql](https://lunarmodules.github.io/luasql/)
