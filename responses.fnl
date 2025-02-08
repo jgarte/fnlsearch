@@ -39,7 +39,9 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
                      (if (next results)
                          (icollect [_ [url title] (ipairs results)
                                     &into [:ul {}]]
-                           [:li {} [:a {:href url} title]])
+                           [:li {}
+                            [:a {:href url}
+                             (pick-values 1 (title:gsub "\\([,!|\"])" "%1"))]])
                          [:p {} "Not found."])
                      form
                      [:p {} [:a {:href "/"} "home"]])]

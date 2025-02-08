@@ -71,7 +71,6 @@ Run `make test-server` in the background before `make test`.
   * [ ] RSS feeds
   * [ ] mastodon export
   * [ ] firefox history
-* [ ] unescape titles
 
 ## Schema
 
