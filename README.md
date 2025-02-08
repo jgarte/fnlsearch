@@ -60,7 +60,9 @@ Run `make test-server` in the background before `make test`.
   * [x] robots.txt
   * [x] html generation?
 * [x] capabilitize
-* [x] about page
+* [-] about page
+* [ ] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
+* [ ] move sourcing code to separate repo
 * [ ] repl
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?

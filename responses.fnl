@@ -1,21 +1,24 @@
 (local {: html : unescaped} (require :html))
 
+(local title "technomancy search")
+
 (fn layout [...]
   (.. "<!DOCTYPE html>\n"
       (html [:html {:lang "en"}
              [:head {}
               [:meta {:charset "UTF-8"}]
+              [:link {:rel "search" : title :href "/opensearch.xml"
+                      :type "application/opensearchdescription+xml"}]
               [:style {}
                "body{margin:40px auto;max-width:650px;line-height:1.6;
 font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
-              [:title {} "technomancy search"]]
+              [:title {} title]]
              [:body {}
-              [:h1 {} "technomancy search"]
+              [:h1 {} title]
               [:div {:id "contents"} ...]
               [:footer {}
                [:p {} "site © 2025 Phil Hagelberg | "
-                [:a {:href "/about"}
-                 "about"] "|"
+                ;; [:a {:href "/about"} "about"] "|"
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
@@ -25,10 +28,6 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
 
 (fn home [{: moonmint} _req]
   (moonmint.response (layout form)))
-
-(fn about [{: moonmint : io} _req]
-  (moonmint.response (layout (unescaped (with-open [f (io.open "about.html")]
-                                          (f:read :*all))))))
 
 (fn search [{: db : log : moonmint} {: rawQuery}]
   (let [{: q} (moonmint.url.queryDecode rawQuery)
@@ -48,7 +47,17 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     (log :Q q)
     (moonmint.response html)))
 
-(fn robots [{: moonmint}]
+(fn robots [{: moonmint} _req]
   (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
 
-{: home : robots : search : about}
+(fn about [{: moonmint : io : static} _req]
+  (moonmint.response (layout (unescaped static.about)))
+  ;; to keep it fresh
+  ;; (moonmint.response (layout (unescaped (with-open [f (io.open "about.html")]
+  ;;                                         (f:read :*all)))))
+  )
+
+(fn static [{: moonmint : static} filename _req]
+  (moonmint.response (. static filename)))
+
+{: home : robots : search : about : static}
