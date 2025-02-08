@@ -9,6 +9,8 @@
 (local log (if (os.getenv "SILENT") #nil print))
 (local slow? (os.getenv "SLOW"))
 
+(fn read [path] (with-open [f (io.open path)] (f:read :*all)))
+
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname}
                                   :io {:open {:write ["/tmp/"]
                                               :read ["data.db" "*.txt" "about.html"
@@ -17,8 +19,9 @@
                                        :lines io.lines
                                        :popen ["pandoc"]}}
                               {: dbg : log : moonmint
-                               :about-html (with-open [f (io.open "about.html")]
-                                             (f:read :*all))
+                               :static {:opensearch (read "static/opensearch.xml")
+                                        :about (read "static/about.html")
+                                        :favicon (read "static/favicon.ico")}
                                :sleep #(os.execute "sleep 1")
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
@@ -44,6 +47,10 @@
                    (router:get "/" (partial responses.home caps))
                    (router:get "/q" (partial responses.search caps))
                    (router:get "/about" (partial responses.about caps))
+                   (router:get "/opensearch.xml" (partial responses.static caps
+                                                          :opensearch))
+                   (router:get "/favicon.ico" (partial responses.static caps
+                                                       :favicon))
                    (router:get "/robots.txt" (partial responses.robots caps))
                    (-> (moonmint)
                        (: :use router)

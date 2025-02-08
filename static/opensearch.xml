@@ -1,0 +1,9 @@
+<opensearchdescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <shortname>Technomancy Search</shortname>
+  <description>Technomancy's search engine</description>
+  <url type="text/html" method="get"
+       template="https://search.technomancy.us/q?q={searchTerms}">
+  <inputencoding>UTF-8</inputencoding>
+  <img width="16" height="16">https://search.technomancy.us/favicon.ico</img>
+  <searchform>https://search.technomancy.us/</searchform>
+</url></opensearchdescription>
