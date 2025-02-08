@@ -31,7 +31,6 @@
 (local _ENV (capabilities.env))
 
 (local index (require :index))
-(local gts (require :gts))
 (local responses (require :responses))
 (local sql (require :sql))
 
@@ -40,9 +39,6 @@
 
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
-  ["gts" db-path username] (each [url (pairs (gts.urls caps.sqlite
-                                                       db-path username))]
-                             (print url))
   ["start" port] (let [router (moonmint.router)]
                    (router:get "/" (partial responses.home caps))
                    (router:get "/q" (partial responses.search caps))
@@ -57,6 +53,5 @@
                        (: :start {: port})))
   _ (do (io.stderr:write "USAGE:
 fennel main.fnl start PORT
-fennel main.fnl index URL_FILE SOURCE_NAME
-fennel main.fnl gts GTS_SQLITE_DB USERNAME\n")
+fennel main.fnl index URL_FILE SOURCE_NAME\n")
         (os.exit 1)))

@@ -1,8 +1,6 @@
-GTS_DB ?= /var/gotosocial/sqlite.db
-GTS_USERNAME ?= technomancy
 URLS ?= urls.txt
 PORT ?= 8082
-SRC=html.fnl request.fnl sql.fnl gts.fnl index.fnl main.fnl responses.fnl
+SRC=html.fnl request.fnl sql.fnl index.fnl main.fnl responses.fnl
 DEPS=moonmint robotstxt.lua capabilities.fnl
 
 run: https.so; fennel main.fnl start $(PORT)
@@ -11,8 +9,6 @@ testall: https.so; fennel test/faith.fnl --tests test test.request
 index: ; fennel main.fnl index $(URLS) $(URLS)
 count: ; cloc $(SRC) ; cloc $(DEPS)
 lint: ; fennel-ls --lint *.fnl
-
-urls.txt: ; fennel main.fnl gts $(GTS_DB) $(GTS_USERNAME) > $@
 
 update-moonmint: ; rsync -r ../moonmint/moonmint/ moonmint/
 

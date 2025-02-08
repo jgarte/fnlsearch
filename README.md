@@ -25,7 +25,7 @@ You start out with a file that contains a list of URLs. Maybe it's
 your bookmarks file that you've been lovingly collecting over the past
 9 years. Maybe you got it from grepping some archive you found. Maybe
 it came from an RSS feed? Or you could extract it from your social
-media account (we can help with that one, maybe). Doesn't matter.
+media account. Doesn't matter.
 
 Point the indexer at this file, and it will crawl it. For each
 successfully-fetched response, if it's text, it will toss it straight
@@ -62,17 +62,11 @@ Run `make test-server` in the background before `make test`.
 * [x] capabilitize
 * [-] about page
 * [ ] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
-* [ ] move sourcing code to separate repo
 * [ ] repl
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
 * [ ] cache failures
 * [-] ranking
-* [-] source URLs from
-  * [x] gotosocial database
-  * [ ] RSS feeds
-  * [ ] mastodon export
-  * [ ] firefox history
 
 ## Schema
 
