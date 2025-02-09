@@ -61,8 +61,8 @@ Run `make test-server` in the background before `make test`.
   * [x] html generation?
 * [x] capabilitize
 * [-] about page
-* [ ] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
-* [ ] repl
+* [x] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
+* [x] repl!!!
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
 * [ ] cache failures

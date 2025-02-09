@@ -145,6 +145,8 @@ then call f with that arg; otherwise error."
 
 (fn builtins.io.stdin [_ stdin] stdin)
 (fn builtins.io.lines [_ lines] lines)
+(fn builtins.io.write [_ write] write)
+(fn builtins.io.flush [_ flush] flush)
 
 (fn for* [_g descriptor ?extra]
   "Return a capabilities table based on the capabilities descriptors provided.
