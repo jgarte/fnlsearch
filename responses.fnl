@@ -57,7 +57,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
   ;;                                         (f:read :*all)))))
   )
 
-(fn static [{: moonmint : static} filename _req]
-  (moonmint.response (. static filename)))
+(fn static [{: moonmint : static} file content-type _req]
+  (moonmint.response (. static file) 200 content-type))
 
 {: home : robots : search : about : static}

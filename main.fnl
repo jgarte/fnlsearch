@@ -44,9 +44,9 @@
                    (router:get "/q" (partial responses.search caps))
                    (router:get "/about" (partial responses.about caps))
                    (router:get "/opensearch.xml" (partial responses.static caps
-                                                          :opensearch))
+                                                          :opensearch "text/xml"))
                    (router:get "/favicon.ico" (partial responses.static caps
-                                                       :favicon))
+                                                       :favicon "image/x-icon"))
                    (router:get "/robots.txt" (partial responses.robots caps))
                    (-> (moonmint)
                        (: :use router)
