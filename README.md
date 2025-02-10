@@ -6,6 +6,10 @@ Installation:
 
     sudo apt install fennel lua-sql-sqlite3 lua-luv pandoc
 
+(You might not find `fennel` in apt yet depending on your distro, but
+it's available in my [third-party repo](https://apt.technomancy.us) or
+you can [install manually](https://fennel-lang.org/setup) easily enough.)
+
 Create a file of URLs, then index it with:
 
     make index URLS=/path/to/urls
@@ -63,6 +67,12 @@ Run `make test-server` in the background before `make test`.
 * [-] about page
 * [x] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
 * [x] repl!!!
+* [ ] crawl table?
+  * [ ] url
+  * [ ] crawled_at
+  * [ ] content_type
+  * [ ] status (200/404/500/blocked/not-indexable)
+* [ ] send PDFs to pandoc
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
 * [ ] cache failures
