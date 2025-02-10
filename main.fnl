@@ -15,23 +15,24 @@
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
-                                              :read ["data.db" "*.txt" "about.html"
+                                              :read ["data.db" "*.txt"
                                                      "sql/" "/tmp/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
                               {: dbg : log : moonmint
                                :static {:opensearch (read "static/opensearch.xml")
-                                        :about (read "static/about.html")
+                                        :why (read "static/why.html")
                                         :favicon (read "static/favicon.ico")}
                                :sleep #(os.execute "sleep 1")
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
 
+(local env (setmetatable {: caps} {:__index _G})) ; for repl
 (local arg _G.arg)
-
 (local _ENV (capabilities.env))
 
+;; these run in the sandbox
 (local index (require :index))
 (local responses (require :responses))
 (local sql (require :sql))
@@ -51,11 +52,13 @@
   ["start" port] (let [router (moonmint.router)
                        repl (coroutine.create (partial fennel.repl))
                        stdin (luv.new_tty 0 true)]
-                   (coroutine.resume repl {:readChunk read-chunk})
+                   (coroutine.resume repl {:readChunk read-chunk : env
+                                           :allowedGlobals false})
                    (luv.read_start stdin #(coroutine.resume repl $2))
                    (router:get "/" (partial responses.home caps))
                    (router:get "/q" (partial responses.search caps))
-                   (router:get "/about" (partial responses.about caps))
+                   (router:get "/why" (partial responses.why caps))
+                   (router:get "/about" #(moonmint.response.redirect "/why"))
                    (router:get "/opensearch.xml" (partial responses.static caps
                                                           :opensearch "text/xml"))
                    (router:get "/favicon.ico" (partial responses.static caps

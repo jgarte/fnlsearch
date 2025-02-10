@@ -18,7 +18,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
               [:div {:id "contents"} ...]
               [:footer {}
                [:p {} "site © 2025 Phil Hagelberg | "
-                ;; [:a {:href "/about"} "about"] "|"
+                ;; [:a {:href "/why"} "why"] "|"
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
@@ -50,14 +50,10 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
 (fn robots [{: moonmint} _req]
   (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
 
-(fn about [{: moonmint : io : static} _req]
-  (moonmint.response (layout (unescaped static.about)))
-  ;; to keep it fresh
-  ;; (moonmint.response (layout (unescaped (with-open [f (io.open "about.html")]
-  ;;                                         (f:read :*all)))))
-  )
+(fn why [{: moonmint : static} _req]
+  (moonmint.response (layout (unescaped static.why))))
 
 (fn static [{: moonmint : static} file content-type _req]
   (moonmint.response (. static file) 200 content-type))
 
-{: home : robots : search : about : static}
+{: home : robots : search : why : static}

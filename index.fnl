@@ -48,14 +48,14 @@
     :html (do (with-open [f (io.open tmp :w)] (f:write body))
               (db:insert url now (extract-metadata (html->text io tmp) source))
               (log :indexed url))
-    _ (log :skipped url content-type)))
+    _ (log :not-indexable url content-type)))
 
-(fn skip? [url] (or (url:find "%.mp4$") (url:find "%.webm$")))
+(fn indexable? [url] (not (or (url:find "%.mp4$") (url:find "%.webm$"))))
 
 (fn index-url [{: io : db : log : dbg : request : robotstxt} url tmp now source]
   (dbg :indexing url)
   (when (and (needs-refresh? db url now) (allowed? request robotstxt dbg url)
-             (not (skip? url)))
+             (indexable? url))
     (case (request.get url)
       {:status 200 : body : headers} (index-body io log body headers
                                                  tmp db url now source)
