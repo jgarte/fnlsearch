@@ -18,7 +18,8 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
               [:div {:id "contents"} ...]
               [:footer {}
                [:p {} "site © 2025 Phil Hagelberg | "
-                ;; [:a {:href "/why"} "why"] "|"
+                [:a {:href "/"} "home"] "|"
+                [:a {:href "/why"} "why"] "|"
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
@@ -40,7 +41,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
                                     &into [:ul {}]]
                            [:li {}
                             [:a {:href url}
-                             (pick-values 1 (title:gsub "\\([,!|\"])" "%1"))]])
+                             (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]])
                          [:p {} "Not found."])
                      form
                      [:p {} [:a {:href "/"} "home"]])]
@@ -50,10 +51,10 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
 (fn robots [{: moonmint} _req]
   (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
 
-(fn why [{: moonmint : static} _req]
-  (moonmint.response (layout (unescaped static.why))))
+(fn snippet [{: moonmint : static} name _req]
+  (moonmint.response (layout (unescaped (. static name)))))
 
 (fn static [{: moonmint : static} file content-type _req]
   (moonmint.response (. static file) 200 content-type))
 
-{: home : robots : search : why : static}
+{: home : robots : search : snippet : static}

@@ -64,7 +64,7 @@ Run `make test-server` in the background before `make test`.
   * [x] robots.txt
   * [x] html generation?
 * [x] capabilitize
-* [-] about page
+* [x] why page
 * [x] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
 * [x] repl!!!
 * [ ] crawl table?
