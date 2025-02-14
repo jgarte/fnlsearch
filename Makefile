@@ -4,6 +4,7 @@ SRC=html.fnl request.fnl sql.fnl index.fnl main.fnl responses.fnl
 DEPS=moonmint robotstxt.lua capabilities.fnl
 
 run: https.so; fennel main.fnl start $(PORT)
+runloop: run ; $(MAKE) runloop
 test: https.so; fennel test/faith.fnl --tests test
 testall: https.so; fennel test/faith.fnl --tests test test.request
 index: ; fennel main.fnl index $(URLS) $(URLS)
@@ -26,4 +27,4 @@ clean:
 	rm -f https.so
 	cd lua-https && git clean -f
 
-.PHONY: run index count lint test update-moonmint test-server clean
+.PHONY: run runloop index count lint test update-moonmint test-server clean

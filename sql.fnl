@@ -7,9 +7,12 @@
         (-> (: (sqlite.sqlite3) :connect db-path)
             (doto (: :execute schema))))))
 
+(fn sanitize [q]
+  ;; way overly paranoid but yeah, whatever; good enough for now
+  (q:gsub "[^a-zA-Z0-9]+" " "))
+
 (λ search [{: conn : queries} q]
-  ;; I'm sure there are other things we need to remove, but for now...
-  (let [query (queries.search:format (conn:escape (q:gsub "[-!%.]" " ")))
+  (let [query (queries.search:format (conn:escape (sanitize (tostring q))))
         cursor (assert (conn:execute query))]
     #(cursor:fetch)))
 

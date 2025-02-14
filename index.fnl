@@ -64,7 +64,7 @@
 (λ index [{: os : sleep : io &as caps}
           url-file source ?slowly?]
   (each [line (io.lines url-file)]
-    (let [url (line:match "([^ ]+)")
+    (let [url (line:match "([^ #]+)")
           tmp (os.tmpname)]
       (index-url caps url tmp (os.time) source)
       (when ?slowly?

@@ -1,6 +1,6 @@
 ;; making an HTTPS request from lua requires choosing among a list of very
 ;; bad options:
-;; * the luvit stuff that comes with moonmint depends on deleted openssl APIs
+;; * the luv stuff that comes with moonmint depends on deleted openssl APIs
 ;; * lua-curl requires lua 5.1 or 5.2
 ;; * lua-http doesn't work with 5.4
 ;; * luasec does not validate certs by default
