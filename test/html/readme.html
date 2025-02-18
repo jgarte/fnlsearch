@@ -1,0 +1,131 @@
+<html>
+  <head><title>readme</title></head>
+  <body>
+    <h1 id="technomancy-search">Technomancy Search</h1>
+    <p>My own <a href="https://search.technomancy.us">personal search
+        engine</a>.</p>
+    <p>Installation:</p>
+    <pre><code>sudo apt install fennel lua-sql-sqlite3 lua-luv pandoc</code></pre>
+    <p>(You might not find <code>fennel</code> in apt yet depending on your
+      distro, but it’s available in my <a
+                                         href="https://apt.technomancy.us">third-party repo</a> or you can <a
+                                                                                                             href="https://fennel-lang.org/setup">install manually</a> easily
+      enough.)</p>
+    <p>Create a file of URLs, then index it with:</p>
+    <pre><code>make index URLS=/path/to/urls</code></pre>
+    <p>Run server:</p>
+    <pre><code>make run PORT=8080</code></pre>
+    <p>Originally based on this post:
+      https://hey.hagelb.org/users/technomancy/statuses/01J1AYF55SMFK81JS13S64YF5V</p>
+    <h2 id="how-does-it-work">How does it work???</h2>
+    <p>Well, it’s very simple you see.</p>
+    <p>You start out with a file that contains a list of URLs. Maybe it’s
+      your bookmarks file that you’ve been lovingly collecting over the past 9
+      years. Maybe you got it from grepping some archive you found. Maybe it
+      came from an RSS feed? Or you could extract it from your social media
+      account. Doesn’t matter.</p>
+    <p>Point the indexer at this file, and it will crawl it. For each
+      successfully-fetched response, if it’s text, it will toss it straight
+      into SQLite’s <a href="https://www.sqlite.org/fts5.html">full-text
+        search</a>. If it’s HTML, it’ll pass it thru <a
+                                                       href="https://pandoc.org">pandoc</a> first to get something a little
+      more palatable.</p>
+    <p>Once the indexing is done, you can launch a web server that will
+      serve up a search page and give you responses in your browser! You
+      probably want to put <a href="https://caddyserver.com/">Caddy</a> in
+      front of it to give it TLS, but this isn’t strictly required.</p>
+    <h2 id="development">Development</h2>
+    <p>Install <code>tidy</code> from apt or whatever.</p>
+    <p>Run <code>make test-server</code> in the background before
+      <code>make test</code>.</p>
+    <h2 id="todo">Todo</h2>
+    <ul>
+      <li><input type="checkbox" disabled="" checked="" />
+        indexing</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        web UI</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        save titles in index</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        partial reindexing</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        honor robots.txt</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        stack traces</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        serve robots.txt</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        error responses for 404 and 500 (moonmint bug)</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        put SQL somewhere better</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        use moonmint agent for fetching</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        tests<ul class="task-list">
+          <li><input type="checkbox" disabled="" checked="" />
+            robots.txt</li>
+          <li><input type="checkbox" disabled="" checked="" />
+            html generation?</li>
+      </ul></li>
+      <li><input type="checkbox" disabled="" checked="" />
+        capabilitize</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        why page</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        opensearch
+        https://www.hanselman.com/blog/on-the-importance-of-opensearch</li>
+      <li><input type="checkbox" disabled="" checked="" />
+        repl!!!</li>
+      <li><input type="checkbox" disabled="" />
+        targeting specific sources</li>
+      <li><input type="checkbox" disabled="" />
+        index run summary</li>
+      <li><input type="checkbox" disabled="" />
+        crawl table?<ul class="task-list">
+          <li><input type="checkbox" disabled="" />
+            url</li>
+          <li><input type="checkbox" disabled="" />
+            crawled_at</li>
+          <li><input type="checkbox" disabled="" />
+            content_type</li>
+          <li><input type="checkbox" disabled="" />
+            status (200/404/500/blocked/not-indexable)</li>
+      </ul></li>
+      <li><input type="checkbox" disabled="" />
+        send PDFs to pandoc</li>
+      <li><input type="checkbox" disabled="" />
+        hugsql style SQL parameters</li>
+      <li><input type="checkbox" disabled="" />
+        cache robots?</li>
+      <li>[-] ranking</li>
+    </ul>
+    <h2 id="schema">Schema</h2>
+    <ul>
+      <li>url</li>
+      <li>title</li>
+      <li>body</li>
+      <li>last crawled</li>
+      <li>source</li>
+    </ul>
+    <h2 id="license">License</h2>
+    <p>Copyright © 2025 Phil Hagelberg</p>
+    <p>Released under the <a href="LICENSE">MIT license</a>.</p>
+    <p>Dependencies:</p>
+    <ul>
+      <li><a href="https://fennel-lang.org">fennel</a></li>
+      <li><a href="https://github.com/bakpakin/moonmint">moonmint</a>
+        (included)</li>
+      <li><a href="https://zadzmo.org/code/robotstxt/">RobotsTXT</a>
+        (included)</li>
+      <li><a
+            href="https://git.sr.ht/~technomancy/capabilities.fnl">capabilities.fnl</a>
+        (included)</li>
+      <li><a href="https://github.com/love2d/lua-https">lua-https</a>
+        (submodule)</li>
+      <li><a href="https://github.com/luvit/luv">luv</a> (dependency of
+        moonmint, use apt or whatever)</li>
+      <li><a href="https://lunarmodules.github.io/luasql/">lua-sql</a></li>
+      <li><a href="https://pandoc.org">pandoc</a></li>
+    </ul>
+  </body>
+</html>

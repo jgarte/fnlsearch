@@ -9,12 +9,23 @@
 
 (fn sanitize [q]
   ;; way overly paranoid but yeah, whatever; good enough for now
-  (q:gsub "[^a-zA-Z0-9]+" " "))
+  (q:gsub "[^a-zA-Z0-9/]+" " "))
 
-(λ search [{: conn : queries} q]
-  (let [query (queries.search:format (conn:escape (sanitize (tostring q))))
+(fn source->sql [source]
+  (table.concat (icollect [_ s (ipairs source)]
+                  (.. "'" (s:gsub "[^a-zA-Z0-9/%.]+" " ") "'")) ","))
+
+(λ search [{: conn : queries} q ?source]
+  (let [query (if ?source
+                  (queries.search-source:format (conn:escape (sanitize q))
+                                                (source->sql ?source))
+                  (queries.search:format (conn:escape (sanitize q))))
         cursor (assert (conn:execute query))]
     #(cursor:fetch)))
+
+(λ sources [{: conn : queries}]
+  (let [cursor (assert (conn:execute queries.sources))]
+    (icollect [s #(cursor:fetch)] s)))
 
 (λ refresh [{: conn : queries} url]
   (let [query (queries.refresh:format (conn:escape url))
@@ -30,8 +41,9 @@
   (assert (db.conn:execute (insert-sql db url body ?title crawled-at source))))
 
 (λ init [{: io : sqlite} db-path]
-  {:conn (open io sqlite db-path) : search : insert : refresh
-   :queries (collect [_ name (ipairs [:insert :search :refresh])]
+  {:conn (open io sqlite db-path) : search : insert : refresh : sources
+   :queries (collect [_ name (ipairs [:insert :search :refresh
+                                      :sources :search-source])]
               name (read io (string.format "sql/%s.sql" name)))})
 
 {: init}

@@ -23,38 +23,46 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
-(local form [:form {:action "/q" :method "GET"}
-             [:input {:type "text" :name "q" :placeholder "query"}]
-             [:input {:type "submit" :value "search"}]])
+(fn form [sources]
+  [:form {:action "/q" :method "GET"}
+   [:input {:type "text" :name "q" :placeholder "query"}]
+   [:input {:type "submit" :value "search"}]
+   (if (. sources 2)
+       [:details {} [:summary {} "sources"]
+        (icollect [_ source (ipairs sources)
+                   &into [:ul {}]]
+          [:li {} [:label {}
+                   [:input {:name "source" :type "checkbox" :value source
+                            :checked :checked}]
+                   source]])])])
 
-(fn home [{: moonmint} _req]
-  (moonmint.response (layout form)))
+(λ home [{: moonmint : sources} _req]
+  (moonmint.response (layout (form sources))))
 
-(fn search [{: db : log : moonmint} {: rawQuery}]
-  (let [{: q} (moonmint.url.queryDecode rawQuery)
-        _ (assert (and q (not= q "")) "query not found")
-        results (icollect [url title (db:search q)]
-                  [url title])
+(λ search [{: db : log : sources : moonmint} {: rawQuery}]
+  (let [{: q : source} (moonmint.url.queryDecodeMulti rawQuery)
+        q (if q (. q 1))
+        results (if (and q (not= q ""))
+                    (icollect [url title (db:search q source)
+                               &into [:ul {}]]
+                      [:li {}
+                       [:a {:href url}
+                        (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]]))
         html (layout [:p {} "Results for" [:kbd {} q]]
-                     (if (next results)
-                         (icollect [_ [url title] (ipairs results)
-                                    &into [:ul {}]]
-                           [:li {}
-                            [:a {:href url}
-                             (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]])
+                     (if (and results (. results 3))
+                         results
                          [:p {} "Not found."])
-                     form
-                     [:p {} [:a {:href "/"} "home"]])]
+                     (form sources))]
     (log :Q q)
     (moonmint.response html)))
 
-(fn robots [{: moonmint} _req]
+(λ robots [{: moonmint} _req]
   (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
 
-(fn snippet [{: moonmint : static} name _req]
+(λ snippet [{: moonmint : static} name _req]
   (moonmint.response (layout (unescaped (. static name)))))
 
-(fn static [{: moonmint : static} file content-type _req]
+(λ static [{: moonmint : static} file content-type _req]
   (moonmint.response (. static file) 200 content-type))
 
 {: home : robots : search : snippet : static}

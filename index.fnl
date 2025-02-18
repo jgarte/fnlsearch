@@ -50,7 +50,12 @@
               (log :indexed url))
     _ (log :not-indexable url content-type)))
 
-(fn indexable? [url] (not (or (url:find "%.mp4$") (url:find "%.webm$"))))
+;; we will skip most of these things after we get the content-type, but
+;; lua-https does not give us a way to see the content-type until after
+;; the entire download has been completed, so these should be skipped early.
+(fn indexable? [url] (not (or (url:find "%.mp4$") (url:find "%.webm$")
+                              (url:find "%.jpe?g$") (url:find "%.gif$")
+                              (url:find "^https://youtu%.?be"))))
 
 (fn index-url [{: io : db : log : dbg : request : robotstxt} url tmp now source]
   (dbg :indexing url)

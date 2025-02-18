@@ -55,16 +55,17 @@
                    (coroutine.resume repl {:readChunk read-chunk : env
                                            :allowedGlobals false})
                    (luv.read_start stdin #(coroutine.resume repl $2))
-                   ;; this sucks; it's reload-hostile
-                   (router:get "/" (partial responses.home caps))
-                   (router:get "/q" (partial responses.search caps))
-                   (router:get "/why" (partial responses.snippet caps :why))
+                   (set caps.sources (caps.db:sources))
+                   ;; can't use partial here because it would prevent reloads
+                   (router:get "/" #(responses.home caps $))
+                   (router:get "/q" #(responses.search caps $))
+                   (router:get "/why" #(responses.snippet caps :why))
                    (router:get "/about" #(moonmint.response.redirect "/why"))
-                   (router:get "/opensearch.xml" (partial responses.static caps
-                                                          :opensearch "text/xml"))
-                   (router:get "/favicon.ico" (partial responses.static caps
-                                                       :favicon "image/x-icon"))
-                   (router:get "/robots.txt" (partial responses.robots caps))
+                   (router:get "/opensearch.xml" #(responses.static
+                                                   caps :opensearch "text/xml"))
+                   (router:get "/favicon.ico" #(responses.static
+                                                caps :favicon "image/x-icon"))
+                   (router:get "/robots.txt" #(responses.robots caps))
                    (-> (moonmint)
                        (: :use router)
                        (: :start {: port})))

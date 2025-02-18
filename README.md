@@ -67,6 +67,8 @@ Run `make test-server` in the background before `make test`.
 * [x] why page
 * [x] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
 * [x] repl!!!
+* [x] source filtering
+* [ ] index run summary
 * [ ] crawl table?
   * [ ] url
   * [ ] crawled_at
@@ -75,7 +77,6 @@ Run `make test-server` in the background before `make test`.
 * [ ] send PDFs to pandoc
 * [ ] hugsql style SQL parameters
 * [ ] cache robots?
-* [ ] cache failures
 * [-] ranking
 
 ## Schema
@@ -99,6 +100,7 @@ Dependencies:
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)
 * [capabilities.fnl](https://git.sr.ht/~technomancy/capabilities.fnl) (included)
 * [lua-https](https://github.com/love2d/lua-https) (submodule)
-* [luv](https://github.com/luvit/luv) (dependency of moonmint, use apt or whatever)
-* [lua-sql](https://lunarmodules.github.io/luasql/)
-* [pandoc](https://pandoc.org)
+* [sqlite](https://www.sqlite.org/) (apt)
+* [luv](https://github.com/luvit/luv) (apt)
+* [lua-sql](https://lunarmodules.github.io/luasql/) (apt)
+* [pandoc](https://pandoc.org) (apt)

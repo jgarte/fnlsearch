@@ -4,7 +4,7 @@ SRC=html.fnl request.fnl sql.fnl index.fnl main.fnl responses.fnl
 DEPS=moonmint robotstxt.lua capabilities.fnl
 
 run: https.so; fennel main.fnl start $(PORT)
-runloop: run ; $(MAKE) runloop
+runloop: run ; sleep 2; $(MAKE) runloop
 test: https.so; fennel test/faith.fnl --tests test
 testall: https.so; fennel test/faith.fnl --tests test test.request
 index: ; fennel main.fnl index $(URLS) $(URLS)
