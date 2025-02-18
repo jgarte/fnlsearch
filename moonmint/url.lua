@@ -105,9 +105,21 @@ local function queryDecode(str)
     return ret
 end
 
+local function queryDecodeMulti(str)
+    local ret = {}
+    for key, value in gmatch(str, "([^%&%=]+)=([^%&%=]*)") do
+        local keyDecoded = urlDecode(key)
+        local valueDecoded = urlDecode(value)
+        ret[keyDecoded] = ret[keyDecoded] or {}
+        table.insert(ret[keyDecoded], valueDecoded)
+    end
+    return ret
+end
+
 return {
     encode = urlEncode,
     decode = urlDecode,
     queryEncode = queryEncode,
-    queryDecode = queryDecode
+    queryDecode = queryDecode,
+    queryDecodeMulti = queryDecodeMulti
 }
