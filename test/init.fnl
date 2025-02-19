@@ -84,7 +84,17 @@
     (t.not-match "suspended" response.body)
     (t.match "readme" response.body))
   ;; remote source
-  )
+  (caps.db:add-remote "http://localhost:8733/search.json"
+                      "test-remote" "http://localhost:8733" "lol")
+  (set caps.sources (caps.db:sources))
+  (let [rawQuery "q=technomancy&source=test2&source=test-remote"
+        response (responses.search caps {: rawQuery :headers {}})
+        headers (collect [_ [k v] (ipairs response.headers)] k v)]
+    (t.= 200 response.code)
+    (t.= "text/html" (. headers "Content-Type"))
+    (t.match "zombo" response.body)
+    (t.match "haha.business" response.body)
+    (t.match "readme" response.body)))
 
 (fn test-json [caps]
   (let [rawQuery "q=technomancy"
