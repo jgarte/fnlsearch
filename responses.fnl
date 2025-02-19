@@ -54,40 +54,51 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
         _ (table.insert unknown name)))
     (values locals remotes unknown)))
 
+(fn clean-title [title]
+  (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1")))
+
 (fn local-results [db q locals]
   (let [results (if (and q (not= q ""))
                     (icollect [url title (db:search q locals)
                                &into [:ul {}]]
-                      [:li {}
-                       [:a {:href url}
-                        (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]]))]
+                      [:li {} [:a {:href url} (clean-title title)]]))]
     (if (and results (. results 3))
         results
         [:p {} "Not found."])))
 
-(fn remote-results [request {: url : name : home} q]
-  [:div {} "Results from " [:a {:href url} name] ":"
-   [:ul {}
-    [:li {} "none"]]])
+(fn remote-results [request json {: url : name : home} q]
+  (let [response (request.get (url:format q) {:headers {"content-accept"
+                                                        "application/json"}})
+        {: results} (json.decode response.body)]
+    (assert (<= 200 response.status 299) (.. "bad response " response.status))
+    [:div {} "Results from " [:a {:href home} name] ":"
+     (if (next results)
+         (icollect [_ {: url : title} (ipairs results) &into [:ul {}]]
+           [:li {} [:a {:href url} (clean-title title)]])
+         [:ul {} [:li {} "none"]])]))
 
-(fn remotes-results [request remotes q]
+(fn remotes-results [request json log remotes q]
   (if (next remotes)
       (icollect [_ r (ipairs remotes) &into [:div {}]]
-        (remote-results request r q))))
+        (case (pcall remote-results request json r q)
+          (true element) element
+          (_ err) (do (log "remote error" err)
+                      [:p {} "Error searching remote " r.name])))))
 
-(λ search-html [{: db : log : sources : request : moonmint} {: rawQuery}]
+(λ search-html [{: db : log : sources : request : json : moonmint} {: rawQuery}]
   (let [{: q : source} (moonmint.url.queryDecodeMulti rawQuery)
         q (if q (. q 1))
         (locals remotes unknown) (categorize-sources sources (or source []))
         html (layout [:p {} "Results for" [:kbd {} q]]
                      (local-results db q locals)
-                     (remotes-results request remotes q)
+                     (remotes-results request json log remotes q)
                      (form sources))]
     (log :Q q)
     (each [_ name (ipairs unknown)] (log :unknown-source name))
     (moonmint.response html)))
 
 (λ search-json [{: db : log : json : moonmint} {: rawQuery}]
+  ;; TODO: should the API let you specify sources too?
   (let [{: q} (moonmint.url.queryDecodeMulti rawQuery)
         q (if q (. q 1))
         body {:results

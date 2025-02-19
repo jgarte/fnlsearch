@@ -12,9 +12,9 @@
 (fn normalize-headers [headers]
   (collect [k v (pairs headers)] (k:lower) v))
 
-(fn get [https url]
+(fn get [https url ?options]
   ;; with one arg, it gives us a "simplified" response which omits headers
-  (let [(status body headers) (https.request url {})]
+  (let [(status body headers) (https.request url (or ?options {}))]
     {: status : body :headers (normalize-headers headers)}))
 
 {: get}
