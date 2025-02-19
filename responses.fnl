@@ -71,13 +71,14 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     [:li {} "none"]]])
 
 (fn remotes-results [request remotes q]
-  (icollect [_ r (ipairs remotes) &into [:div {}]]
-    (remote-results request r q)))
+  (if (next remotes)
+      (icollect [_ r (ipairs remotes) &into [:div {}]]
+        (remote-results request r q))))
 
-(λ search [{: db : log : sources : request : moonmint} {: rawQuery}]
+(λ search-html [{: db : log : sources : request : moonmint} {: rawQuery}]
   (let [{: q : source} (moonmint.url.queryDecodeMulti rawQuery)
         q (if q (. q 1))
-        (locals remotes unknown) (categorize-sources sources source)
+        (locals remotes unknown) (categorize-sources sources (or source []))
         html (layout [:p {} "Results for" [:kbd {} q]]
                      (local-results db q locals)
                      (remotes-results request remotes q)
@@ -85,6 +86,22 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     (log :Q q)
     (each [_ name (ipairs unknown)] (log :unknown-source name))
     (moonmint.response html)))
+
+(λ search-json [{: db : log : json : moonmint} {: rawQuery}]
+  (let [{: q} (moonmint.url.queryDecodeMulti rawQuery)
+        q (if q (. q 1))
+        body {:results
+              (icollect [url title rank (db:search q)]
+                {: url : title :rank (- rank)})}]
+    (log :JQ q)
+    (moonmint.response {:body (json.encode body)
+                        :code 200
+                        :headers {"content-type" "application/json"}})))
+
+(λ search [caps req]
+  (case (. req.headers "content-accept")
+    "application/json" (search-json caps req)
+    _ (search-html caps req)))
 
 (λ robots [{: moonmint} _req]
   (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))

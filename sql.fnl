@@ -3,9 +3,11 @@
 (λ open [io sqlite db-path]
   (case (io.open db-path)
     f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
-    _ (let [schema (read io "sql/schema.sql")]
-        (-> (: (sqlite.sqlite3) :connect db-path)
-            (doto (: :execute schema))))))
+    _ (let [schema (read io "sql/schema.sql")
+            db (: (sqlite.sqlite3) :connect db-path)]
+        (each [table (schema:gmatch "[^;]+")]
+          (db:execute table))
+        db)))
 
 (fn sanitize [q]
   ;; way overly paranoid but yeah, whatever; good enough for now

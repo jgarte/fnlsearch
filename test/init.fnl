@@ -4,6 +4,7 @@
 (local responses (require :responses))
 (local sql (require :sql))
 (local https (require :https))
+(local json (require :dkjson))
 
 (local db-path "test/data.db")
 
@@ -11,8 +12,9 @@
   (os.remove db-path)
   (let [caps {: io :os {:time os.time :tmpname os.tmpname}
               :log #nil :dbg #nil :sleep #nil
-              :sources ["test" "test2"] :static {:why "because"}
-              :robotstxt (require :robotstxt)
+              :sources [{:name "test"} {:name "test2"}]
+              :static {:why "because"}
+              :robotstxt (require :robotstxt) : json
               :sqlite (require :luasql.sqlite3)
               :moonmint (require :moonmint)
               :request {:get (partial (. (require :request) :get) https)}}]
@@ -36,10 +38,12 @@
           (.. "expected results from " q))))
 
 (fn test-source [caps]
-  (let [urls (collect [url title (caps.db:search "a" ["test"])] title url)]
+  (let [urls (collect [url title (caps.db:search "a" [{:name "test"}])]
+               title url)]
     (t.is (. urls "Leiningen"))
     (t.= nil (. urls "readme")))
-  (let [urls (collect [url title (caps.db:search "a" ["test2"])] title url)]
+  (let [urls (collect [url title (caps.db:search "a" [{:name "test2"}])]
+               title url)]
     (t.= nil (. urls "Leiningen"))
     (t.is (. urls "readme"))))
 
@@ -50,13 +54,14 @@
 
 (fn test-tidy [caps]
   (t.is (tidy? (responses.home caps)))
-  (t.is (tidy? (responses.search caps {:rawQuery "q=technomancy"} true)))
+  (t.is (tidy? (responses.search caps {:rawQuery "q=technomancy"
+                                       :headers {}})))
   (t.is (tidy? (responses.snippet caps :why))))
 
 (fn test-responses [caps]
   ;; both sources
   (let [rawQuery "q=technomancy&source=test&source=test2"
-        response (responses.search caps {: rawQuery} true)
+        response (responses.search caps {: rawQuery :headers {}})
         headers (collect [_ [k v] (ipairs response.headers)] k v)]
     (t.= 200 response.code)
     (t.= "text/html" (. headers "Content-Type"))
@@ -64,7 +69,7 @@
     (t.match "readme" response.body))
   ;; just one source
   (let [rawQuery "q=technomancy&source=test"
-        response (responses.search caps {: rawQuery} true)
+        response (responses.search caps {: rawQuery :headers {}})
         headers (collect [_ [k v] (ipairs response.headers)] k v)]
     (t.= 200 response.code)
     (t.= "text/html" (. headers "Content-Type"))
@@ -72,16 +77,28 @@
     (t.not-match "readme" response.body))
   ;; the other source
   (let [rawQuery "q=technomancy&source=test2"
-        response (responses.search caps {: rawQuery} true)
+        response (responses.search caps {: rawQuery :headers {}})
         headers (collect [_ [k v] (ipairs response.headers)] k v)]
     (t.= 200 response.code)
     (t.= "text/html" (. headers "Content-Type"))
     (t.not-match "suspended" response.body)
     (t.match "readme" response.body)))
 
+(fn test-json [caps]
+  (let [rawQuery "q=technomancy"
+        headers {"content-accept" "application/json"}
+        response (responses.search caps {: rawQuery : headers})
+        body (json.decode response.body)
+        titles (collect [_ {: title} (ipairs body.results)] title true)]
+    (t.= 200 response.code)
+    (t.= "application/json" (. response.headers "content-type"))
+    (t.is (. titles "readme"))
+    (t.is (. titles "Leiningen"))))
+
 {: setup-all
  : test-search
  : test-sanitize
  : test-source
  : test-tidy
- : test-responses}
+ : test-responses
+ : test-json}

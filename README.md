@@ -99,6 +99,7 @@ Dependencies:
 * [moonmint](https://github.com/bakpakin/moonmint) (included)
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)
 * [capabilities.fnl](https://git.sr.ht/~technomancy/capabilities.fnl) (included)
+* [dkjson](http://dkolf.de/dkjson-lua/) (included)
 * [lua-https](https://github.com/love2d/lua-https) (submodule)
 * [sqlite](https://www.sqlite.org/) (apt)
 * [luv](https://github.com/luvit/luv) (apt)

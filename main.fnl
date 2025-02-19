@@ -26,6 +26,7 @@
                                         :why (read "static/why.html")
                                         :favicon (read "static/favicon.ico")}
                                :sleep #(os.execute "sleep 1")
+                               :json (require :dkjson)
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
 
