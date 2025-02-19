@@ -1,7 +1,7 @@
 URLS ?= urls.txt
 PORT ?= 8082
 SRC=html.fnl request.fnl sql.fnl index.fnl main.fnl responses.fnl
-DEPS=moonmint robotstxt.lua capabilities.fnl
+DEPS=moonmint robotstxt.lua capabilities.fnl dkjson.lua
 
 run: https.so; fennel main.fnl start $(PORT)
 runloop: run ; sleep 2; $(MAKE) runloop

@@ -11,8 +11,6 @@
 (local slow? (os.getenv "SLOW"))
 (local db-path (or (os.getenv "DB_PATH") "data.db"))
 
-(fn read [path] (with-open [f (io.open path)] (f:read :*all)))
-
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
@@ -22,9 +20,6 @@
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
                               {: dbg : log : moonmint
-                               :static {:opensearch (read "static/opensearch.xml")
-                                        :why (read "static/why.html")
-                                        :favicon (read "static/favicon.ico")}
                                :sleep #(os.execute "sleep 1")
                                :json (require :dkjson)
                                :robotstxt (require :robotstxt)
@@ -63,13 +58,16 @@
                    ;; can't use partial here because it would prevent reloads
                    (router:get "/" #(responses.home caps $))
                    (router:get "/q" #(responses.search caps $))
+                   ;; in case you don't want to mess with content-accept
+                   (router:get "/q.json" #(responses.search-json caps $))
                    (router:get "/why" #(responses.snippet caps :why))
                    (router:get "/about" #(moonmint.response.redirect "/why"))
-                   (router:get "/opensearch.xml" #(responses.static
-                                                   caps :opensearch "text/xml"))
-                   (router:get "/favicon.ico" #(responses.static
-                                                caps :favicon "image/x-icon"))
-                   (router:get "/robots.txt" #(responses.robots caps))
+                   (router:get "/opensearch.xml" #(moonmint.response.file
+                                                   "static/opensearch.xml"))
+                   (router:get "/favicon.ico" #(moonmint.response.file
+                                                "static/favicon.ico"))
+                   (router:get "/robots.txt" #(moonmint.response.file
+                                               "static/robots.txt"))
                    (-> (moonmint)
                        (: :use router)
                        (: :start {: port})))

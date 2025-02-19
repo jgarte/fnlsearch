@@ -103,13 +103,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     "application/json" (search-json caps req)
     _ (search-html caps req)))
 
-(λ robots [{: moonmint} _req]
-  (moonmint.response "user-agent: *\ndisallow: /q" 200 "text/plain\n"))
-
 (λ snippet [{: moonmint : static} name _req]
   (moonmint.response (layout (unescaped (. static name)))))
 
-(λ static [{: moonmint : static} file content-type _req]
-  (moonmint.response (. static file) 200 content-type))
-
-{: home : robots : search : snippet : static}
+{: home : search : snippet : search-json}
