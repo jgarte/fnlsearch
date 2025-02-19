@@ -48,6 +48,7 @@
 
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
+  ["add-remote" url name home ?desc] (caps.db:add-remote url name home ?desc)
   ["start" port] (let [router (moonmint.router)
                        repl (coroutine.create (partial fennel.repl))
                        stdin (luv.new_tty 0 true)]
@@ -71,7 +72,8 @@
                    (-> (moonmint)
                        (: :use router)
                        (: :start {: port})))
-  _ (do (io.stderr:write "USAGE:
+  _ (do (print "USAGE:
 fennel main.fnl start PORT
-fennel main.fnl index URL_FILE SOURCE_NAME\n")
-        (os.exit 1)))
+fennel main.fnl index URL_FILE SOURCE_NAME
+fennel main.fnl add-remote URL NAME HOME [DESCRIPTION]")
+        (caps.os.exit 1)))

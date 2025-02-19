@@ -82,7 +82,9 @@
     (t.= 200 response.code)
     (t.= "text/html" (. headers "Content-Type"))
     (t.not-match "suspended" response.body)
-    (t.match "readme" response.body)))
+    (t.match "readme" response.body))
+  ;; remote source
+  )
 
 (fn test-json [caps]
   (let [rawQuery "q=technomancy"

@@ -47,10 +47,19 @@
 (λ insert [db url crawled-at {: body :title ?title : source}]
   (assert (db.conn:execute (insert-sql db url body ?title crawled-at source))))
 
+(λ add-remote [{: conn : queries} url name home description]
+  (assert (conn:execute
+           (queries.add-remote:format (conn:escape url)
+                                      (conn:escape name)
+                                      (conn:escape home)
+                                      (conn:escape description)))))
+
 (λ init [{: io : sqlite} db-path]
-  {:conn (open io sqlite db-path) : search : insert : refresh : sources
+  {:conn (open io sqlite db-path)
+   : search : insert : refresh : sources : add-remote
    :queries (collect [_ name (ipairs [:insert :search :refresh
-                                      :sources :search-source :remotes])]
+                                      :sources :search-source
+                                      :remotes :add-remote])]
               name (read io (string.format "sql/%s.sql" name)))})
 
 {: init}
