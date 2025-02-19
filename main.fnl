@@ -9,13 +9,14 @@
 (local dbg (if (os.getenv "DEBUG") print #nil))
 (local log (if (os.getenv "SILENT") #nil print))
 (local slow? (os.getenv "SLOW"))
+(local db-path (or (os.getenv "DB_PATH") "data.db"))
 
 (fn read [path] (with-open [f (io.open path)] (f:read :*all)))
 
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
-                                              :read ["data.db" "*.txt"
+                                              :read [db-path "*.txt"
                                                      "sql/" "/tmp/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
@@ -28,6 +29,8 @@
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
 
+(set _G.caps caps)
+
 (local env (setmetatable {: caps} {:__index _G})) ; for repl
 (local arg _G.arg)
 (local _ENV (capabilities.env))
@@ -37,7 +40,7 @@
 (local responses (require :responses))
 (local sql (require :sql))
 
-(set caps.db (sql.init caps "data.db"))
+(set caps.db (sql.init caps db-path))
 (set caps.request {:get (partial (. (require :request) :get) https)})
 
 (fn read-chunk []

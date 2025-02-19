@@ -12,8 +12,8 @@
   (q:gsub "[^a-zA-Z0-9/]+" " "))
 
 (fn source->sql [source]
-  (table.concat (icollect [_ s (ipairs source)]
-                  (.. "'" (s:gsub "[^a-zA-Z0-9/%.]+" " ") "'")) ","))
+  (table.concat (icollect [_ {: name} (ipairs source)]
+                  (.. "'" (name:gsub "[^a-zA-Z0-9/%.]+" " ") "'")) ","))
 
 (λ search [{: conn : queries} q ?source]
   (let [query (if ?source
@@ -24,8 +24,13 @@
     #(cursor:fetch)))
 
 (λ sources [{: conn : queries}]
-  (let [cursor (assert (conn:execute queries.sources))]
-    (icollect [s #(cursor:fetch)] s)))
+  (let [cursor (assert (conn:execute queries.sources))
+        remotes-cursor (assert (conn:execute queries.remotes))
+        out []]
+    (icollect [s #(cursor:fetch) &into out] {:name s})
+    (icollect [url name home description #(remotes-cursor:fetch)
+               &into out]
+      {: name : url : home : description})))
 
 (λ refresh [{: conn : queries} url]
   (let [query (queries.refresh:format (conn:escape url))
@@ -43,7 +48,7 @@
 (λ init [{: io : sqlite} db-path]
   {:conn (open io sqlite db-path) : search : insert : refresh : sources
    :queries (collect [_ name (ipairs [:insert :search :refresh
-                                      :sources :search-source])]
+                                      :sources :search-source :remotes])]
               name (read io (string.format "sql/%s.sql" name)))})
 
 {: init}

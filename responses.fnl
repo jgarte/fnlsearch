@@ -23,37 +23,67 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
+(fn source-selector [{: name : home : description}]
+  [:li {} [:label {:title description}
+           [:input {:name "source" :type "checkbox" :value name
+                    :checked :checked}]
+           (if home
+               [:a {:href home} name]
+               name)]])
+
 (fn form [sources]
   [:form {:action "/q" :method "GET"}
    [:input {:type "text" :name "q" :placeholder "query"}]
    [:input {:type "submit" :value "search"}]
    (if (. sources 2)
-       [:details {} [:summary {} "sources"]
+       [:details {:id "sources"} [:summary {} "sources"]
         (icollect [_ source (ipairs sources)
                    &into [:ul {}]]
-          [:li {} [:label {}
-                   [:input {:name "source" :type "checkbox" :value source
-                            :checked :checked}]
-                   source]])])])
+          (source-selector source))])])
 
 (λ home [{: moonmint : sources} _req]
   (moonmint.response (layout (form sources))))
 
-(λ search [{: db : log : sources : moonmint} {: rawQuery}]
-  (let [{: q : source} (moonmint.url.queryDecodeMulti rawQuery)
-        q (if q (. q 1))
-        results (if (and q (not= q ""))
-                    (icollect [url title (db:search q source)
+(fn categorize-sources [sources requested]
+  (let [locals [] remotes [] unknown []
+        sources-by-name (collect [_ {: name &as s} (ipairs sources)] name s)]
+    (each [_ name (ipairs requested)]
+      (case (. sources-by-name name)
+        {:url url_ &as s} (table.insert remotes s)
+        {:name name_ &as s} (table.insert locals s)
+        _ (table.insert unknown name)))
+    (values locals remotes unknown)))
+
+(fn local-results [db q locals]
+  (let [results (if (and q (not= q ""))
+                    (icollect [url title (db:search q locals)
                                &into [:ul {}]]
                       [:li {}
                        [:a {:href url}
-                        (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]]))
+                        (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1"))]]))]
+    (if (and results (. results 3))
+        results
+        [:p {} "Not found."])))
+
+(fn remote-results [request {: url : name : home} q]
+  [:div {} "Results from " [:a {:href url} name] ":"
+   [:ul {}
+    [:li {} "none"]]])
+
+(fn remotes-results [request remotes q]
+  (icollect [_ r (ipairs remotes) &into [:div {}]]
+    (remote-results request r q)))
+
+(λ search [{: db : log : sources : request : moonmint} {: rawQuery}]
+  (let [{: q : source} (moonmint.url.queryDecodeMulti rawQuery)
+        q (if q (. q 1))
+        (locals remotes unknown) (categorize-sources sources source)
         html (layout [:p {} "Results for" [:kbd {} q]]
-                     (if (and results (. results 3))
-                         results
-                         [:p {} "Not found."])
+                     (local-results db q locals)
+                     (remotes-results request remotes q)
                      (form sources))]
     (log :Q q)
+    (each [_ name (ipairs unknown)] (log :unknown-source name))
     (moonmint.response html)))
 
 (λ robots [{: moonmint} _req]
