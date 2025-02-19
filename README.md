@@ -42,6 +42,55 @@ up a search page and give you responses in your browser! You probably
 want to put [Caddy](https://caddyserver.com/) in front of it to give
 it TLS, but this isn't strictly required.
 
+## Search sources
+
+I lied! It's not that simple.
+
+Every time you index a set of URLs, you provide a `source` field which
+will be stored with the pages from that indexing run. When you go to
+make a search, you can select what sources you wish to use on a
+per-query basis.
+
+## Distributed searches
+
+Local sources get added automatically at indexing time. But you can
+also add remote sources so that searches include results across a
+number of sites.
+
+To add a remote, run this:
+
+    fennel main.fnl add-remote "https://search.technomancy.us?q=%s" \
+      "technomancy searches" "https://search.technomancy.us" \
+      "a search engine"
+
+Then it will show up in the sources listing for each search.
+
+## Also there is an API
+
+https://search.technomancy.us/q.json?q=hello
+
+```json
+{
+    "results": [
+        {
+            "url": "https://fennel-lang.org",
+            "rank": 1.9,
+            "title": "The Fennel Programming Language"
+        },
+        {
+            "url": "https://leiningen.org",
+            "rank": 1.68,
+            "title": "Leiningen"
+        },
+        {
+            "url": "https://technomancy.us/202",
+            "rank": 1.44,
+            "title": "in which things once suspended are resumed - Technomancy"
+        }
+    ]
+}
+```
+
 ## Development
 
 Install `tidy` from apt or whatever.
@@ -61,13 +110,15 @@ Run `make test-server` in the background before `make test`.
 * [x] put SQL somewhere better
 * [x] use moonmint agent for fetching
 * [x] tests
-  * [x] robots.txt
-  * [x] html generation?
 * [x] capabilitize
 * [x] why page
 * [x] opensearch https://www.hanselman.com/blog/on-the-importance-of-opensearch
 * [x] repl!!!
 * [x] source filtering
+* [x] json API
+* [x] storing remote sources
+* [x] basic distributed searches
+* [ ] add-remote from opensearch.xml?
 * [ ] index run summary
 * [ ] crawl table?
   * [ ] url
