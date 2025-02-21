@@ -9,12 +9,16 @@
 ;; of these, for the simple kind of requests we are making here, love2d's client
 ;; poses the least severe problems
 
+(local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
+
 (fn normalize-headers [headers]
   (collect [k v (pairs headers)] (k:lower) v))
 
-(fn get [https url ?options]
+(fn get [https url ?req-headers]
   ;; with one arg, it gives us a "simplified" response which omits headers
-  (let [(status body headers) (https.request url (or ?options {}))]
+  (let [req-headers (doto (or ?req-headers {})
+                      (tset "user-agent" user-agent))
+        (status body headers) (https.request url {:headers req-headers})]
     {: status : body :headers (normalize-headers headers)}))
 
-{: get}
+{: get : user-agent}

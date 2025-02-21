@@ -1,5 +1,3 @@
-(local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
-
 (local stale-time 604800) ; 1 week
 
 (fn needs-refresh? [db url now]
@@ -7,8 +5,7 @@
     crawled-at (< (tonumber crawled-at) (- now stale-time))
     _ true))
 
-(local pandoc-cmd (.. "pandoc -s -f html -t markdown "
-                      "--request-header User-Agent:\"%s\" %q"))
+(local pandoc-cmd "pandoc -s -f html -t markdown --sandbox %q")
 
 (local robots-domains {})
 
@@ -16,7 +13,7 @@
   (case (request.get (.. prefix "/robots.txt"))
     {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
                                r (robotstxt.load_table lines)]
-                           (r:set_agent user-agent)
+                           (r:set_agent request.user-agent)
                            (set (. robots-domains prefix) r))
     _ true))
 
@@ -29,7 +26,7 @@
             (allowed? request robotstxt dbg url)))))
 
 (fn html->text [io tmp]
-  (with-open [pandoc (assert (io.popen (pandoc-cmd:format user-agent tmp)))]
+  (with-open [pandoc (assert (io.popen (pandoc-cmd:format tmp)))]
     (pandoc:read :*all)))
 
 (fn normalize-type [content-type]

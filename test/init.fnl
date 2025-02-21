@@ -17,7 +17,8 @@
               :robotstxt (require :robotstxt) : json
               :sqlite (require :luasql.sqlite3)
               :moonmint (require :moonmint)
-              :request {:get (partial (. (require :request) :get) https)}}]
+              :request {:get (partial (. (require :request) :get) https)
+                        :user-agent "test"}}]
     (set caps.db (sql.init caps db-path))
     ;; need to run `make test-server' in the background so these URLs work
     (index.index caps "test/urls.txt" "test")

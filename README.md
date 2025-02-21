@@ -118,6 +118,7 @@ Run `make test-server` in the background before `make test`.
 * [x] json API
 * [x] storing remote sources
 * [x] basic distributed searches
+* [ ] de-duplicate across sources
 * [ ] add-remote from opensearch.xml?
 * [ ] index run summary
 * [ ] crawl table?

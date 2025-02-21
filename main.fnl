@@ -37,7 +37,8 @@
 (local sql (require :sql))
 
 (set caps.db (sql.init caps db-path))
-(set caps.request {:get (partial (. (require :request) :get) https)})
+(set caps.request (let [{: get : user-agent} (require :request)]
+                    {:get (partial get https) : user-agent}))
 
 (fn read-chunk []
   (caps.io.write ">> ")

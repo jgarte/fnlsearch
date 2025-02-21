@@ -14,8 +14,8 @@
   (q:gsub "[^a-zA-Z0-9/]+" " "))
 
 (fn source->sql [source]
-  (table.concat (icollect [_ {: name} (ipairs source)]
-                  (.. "'" (name:gsub "[^a-zA-Z0-9/%.]+" " ") "'")) ","))
+  ;; we've already validated that every source name must exist by this point
+  (table.concat (icollect [_ {: name} (ipairs source)] (.. "'" name "'")) ","))
 
 (λ search [{: conn : queries} q ?source]
   (let [query (if ?source

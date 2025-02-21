@@ -67,8 +67,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
         [:p {} "Not found."])))
 
 (fn remote-results [request json {: url : name : home} q]
-  (let [response (request.get (url:format q) {:headers {"content-accept"
-                                                        "application/json"}})
+  (let [response (request.get (url:format q) {"content-accept" "application/json"})
         {: results} (json.decode response.body)]
     (assert (<= 200 response.status 299) (.. "bad response " response.status))
     [:div {} "Results from " [:a {:href home} name] ":"
