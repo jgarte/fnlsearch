@@ -20,6 +20,7 @@ function _methods.set_agent( this, agent )
 	-- Find one.
 	--
 	for name in pairs(this.agents) do
+		name = name:gsub('%-', '%%-')
 		if agent:match(name) then
 			rawset( this, 'current_agent', name )
 		end
@@ -141,7 +142,7 @@ local Line = l_Agent + l_Allow + l_Disallow + l_SiteMap + l_Delay
 
 
 --
--- Convert robots.txt patters into Lua patterns.
+-- Convert robots.txt patterns into Lua patterns.
 --
 local function pattern( url )
 
