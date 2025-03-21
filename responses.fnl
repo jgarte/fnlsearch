@@ -52,6 +52,9 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
         {:url url_ &as s} (table.insert remotes s)
         {:name name_ &as s} (table.insert locals s)
         _ (table.insert unknown name)))
+    (when (not (next requested))
+      (each [_ s (pairs sources)]
+        (case s {:url nil :name name_} (table.insert locals s))))
     (values locals remotes unknown)))
 
 (fn clean-title [title]

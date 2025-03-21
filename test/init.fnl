@@ -76,6 +76,14 @@
     (t.= "text/html" (. headers "Content-Type"))
     (t.match "suspended" response.body)
     (t.not-match "readme" response.body))
+  ;; no sources specified means all
+  (let [rawQuery "q=technomancy"
+        response (responses.search caps {: rawQuery :headers {}})
+        headers (collect [_ [k v] (ipairs response.headers)] k v)]
+    (t.= 200 response.code)
+    (t.= "text/html" (. headers "Content-Type"))
+    (t.match "suspended" response.body)
+    (t.match "readme" response.body))
   ;; the other source
   (let [rawQuery "q=technomancy&source=test2"
         response (responses.search caps {: rawQuery :headers {}})
