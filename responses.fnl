@@ -116,7 +116,8 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     "application/json" (search-json caps req)
     _ (search-html caps req)))
 
-(λ snippet [{: moonmint : static} name _req]
-  (moonmint.response (layout (unescaped (. static name)))))
+(λ snippet [{: moonmint : io} name _req]
+  (with-open [f (io.open name)]
+    (moonmint.response (layout (unescaped (f:read :*all))))))
 
 {: home : search : snippet : search-json}

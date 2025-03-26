@@ -14,8 +14,8 @@
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
-                                              :read [db-path "*.txt"
-                                                     "sql/" "/tmp/"]}
+                                              :read [db-path "*.txt" "sql/"
+                                                     "static/why.html" "/tmp/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
@@ -62,7 +62,7 @@
                    (router:get "/q" #(responses.search caps $))
                    ;; in case you don't want to mess with content-accept
                    (router:get "/q.json" #(responses.search-json caps $))
-                   (router:get "/why" #(responses.snippet caps :why))
+                   (router:get "/why" #(responses.snippet caps "static/why.html"))
                    (router:get "/about" #(moonmint.response.redirect "/why"))
                    (router:get "/opensearch.xml" #(moonmint.response.file
                                                    "static/opensearch.xml"))
