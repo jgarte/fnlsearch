@@ -25,8 +25,7 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
 
 (fn source-selector [{: name : home : description}]
   [:li {} [:label {:title description}
-           [:input {:name "source" :type "checkbox" :value name
-                    :checked :checked}]
+           [:input {:name "source" :type "checkbox" :value name}]
            (if home
                [:a {:href home} name]
                name)]])
@@ -36,7 +35,8 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
    [:input {:type "text" :name "q" :placeholder "query"}]
    [:input {:type "submit" :value "search"}]
    (if (. sources 2)
-       [:details {:id "sources"} [:summary {} "sources"]
+       [:details {:id "sources"}
+        [:summary {} "search only specific sources"]
         (icollect [_ source (ipairs sources)
                    &into [:ul {}]]
           (source-selector source))])])
