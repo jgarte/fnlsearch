@@ -6,7 +6,10 @@
     _ (let [schema (read io "sql/schema.sql")
             db (: (sqlite.sqlite3) :connect db-path)]
         (each [table (schema:gmatch "[^;]+")]
-          (db:execute table))
+          (case (db:execute table)
+            ;; statements dreamed up by the utterly deranged.
+            (nil "LuaSQL: not an error") nil
+            (nil msg) (error msg)))
         db)))
 
 (fn sanitize [q]
@@ -39,6 +42,9 @@
         cursor (assert (conn:execute query))]
     (cursor:fetch)))
 
+(λ delete [{: conn : queries} url]
+  (assert (conn:execute (queries.delete:format (conn:escape url)))))
+
 (fn insert-sql [{: conn : queries} url body title crawled-at source]
   (queries.insert:format (conn:escape url) (conn:escape (or title url))
                          (conn:escape body) (conn:escape source)
@@ -56,8 +62,8 @@
 
 (λ init [{: io : sqlite} db-path]
   {:conn (open io sqlite db-path)
-   : search : insert : refresh : sources : add-remote
-   :queries (collect [_ name (ipairs [:insert :search :refresh
+   : search : insert : refresh : sources : add-remote : delete
+   :queries (collect [_ name (ipairs [:insert :search :refresh :delete
                                       :sources :search-source
                                       :remotes :add-remote])]
               name (read io (string.format "sql/%s.sql" name)))})

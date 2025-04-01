@@ -3,7 +3,7 @@
 (fn needs-refresh? [db url now]
   (case (db:refresh url)
     crawled-at (< (tonumber crawled-at) (- now stale-time))
-    _ true))
+    _ :new))
 
 (local pandoc-cmd "pandoc -s -f html -t markdown --sandbox %q")
 
@@ -56,12 +56,14 @@
 
 (fn index-url [{: io : db : log : dbg : request : robotstxt} url tmp now source]
   (dbg :indexing url)
-  (when (and (needs-refresh? db url now) (allowed? request robotstxt dbg url)
-             (indexable? url))
-    (case (request.get url)
-      {:status 200 : body : headers} (index-body io log body headers
-                                                 tmp db url now source)
-      {: status} (dbg :fail status))))
+  (let [refresh? (needs-refresh? db url now)]
+    (when (and refresh? (allowed? request robotstxt dbg url) (indexable? url))
+      (when (not= refresh? :new)
+        (db:delete url))
+      (case (request.get url)
+        {:status 200 : body : headers} (index-body io log body headers
+                                                   tmp db url now source)
+        {: status} (dbg :fail status)))))
 
 (λ index [{: os : sleep : io &as caps}
           url-file source ?slowly?]
