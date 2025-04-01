@@ -5,6 +5,7 @@
 (local sql (require :sql))
 (local https (require :https))
 (local json (require :dkjson))
+(local request (require :request))
 
 (local db-path "test/data.db")
 
@@ -23,6 +24,9 @@
     ;; need to run `make test-server' in the background so these URLs work
     (index.index caps "test/urls.txt" "test")
     (index.index caps "test/urls2.txt" "test2")
+    (when (not= 200 (. (caps.request.get "http://localhost:8733/robots.txt")
+                       :status))
+      (error "Ensure `make test-server` is running in the background!"))
     caps))
 
 (fn test-search [caps]
@@ -57,7 +61,7 @@
   (t.is (tidy? (responses.home caps)))
   (t.is (tidy? (responses.search caps {:rawQuery "q=technomancy"
                                        :headers {}})))
-  (t.is (tidy? (responses.snippet caps :why))))
+  (t.is (tidy? (responses.snippet caps "static/why.html"))))
 
 (fn test-responses [caps]
   ;; both sources
