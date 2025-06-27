@@ -25,7 +25,7 @@
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
 
-(set _G.caps caps)
+(set _G.caps caps) ; for repl
 
 (local env (setmetatable {: caps} {:__index _G})) ; for repl
 (local arg _G.arg)
@@ -47,32 +47,36 @@
     input (.. input "\n")
     nil (caps.os.exit 0)))
 
+(fn start [port]
+  (let [router (moonmint.router)]
+    (set caps.sources (caps.db:sources))
+    ;; can't use partial here because it would prevent reloads
+    (router:get "/" #(responses.home caps $))
+    (router:get "/q" #(responses.search caps $))
+    ;; in case you don't want to mess with content-accept
+    (router:get "/q.json" #(responses.search-json caps $))
+    (router:get "/why" #(responses.snippet caps "static/why.html"))
+    (router:get "/about" #(moonmint.response.redirect "/why"))
+    (router:get "/opensearch.xml" #(moonmint.response.file
+                                    "static/opensearch.xml"))
+    (router:get "/favicon.ico" #(moonmint.response.file
+                                 "static/favicon.ico"))
+    (router:get "/robots.txt" #(moonmint.response.file
+                                "static/robots.txt"))
+    (-> (moonmint)
+        (: :use router)
+        (: :start {: port}))))
+
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
   ["add-remote" url name home ?desc] (caps.db:add-remote url name home ?desc)
-  ["start" port] (let [router (moonmint.router)
-                       repl (coroutine.create (partial fennel.repl))
-                       stdin (luv.new_tty 0 true)]
-                   (coroutine.resume repl {:readChunk read-chunk : env
-                                           :allowedGlobals false})
-                   (luv.read_start stdin #(coroutine.resume repl $2))
-                   (set caps.sources (caps.db:sources))
-                   ;; can't use partial here because it would prevent reloads
-                   (router:get "/" #(responses.home caps $))
-                   (router:get "/q" #(responses.search caps $))
-                   ;; in case you don't want to mess with content-accept
-                   (router:get "/q.json" #(responses.search-json caps $))
-                   (router:get "/why" #(responses.snippet caps "static/why.html"))
-                   (router:get "/about" #(moonmint.response.redirect "/why"))
-                   (router:get "/opensearch.xml" #(moonmint.response.file
-                                                   "static/opensearch.xml"))
-                   (router:get "/favicon.ico" #(moonmint.response.file
-                                                "static/favicon.ico"))
-                   (router:get "/robots.txt" #(moonmint.response.file
-                                               "static/robots.txt"))
-                   (-> (moonmint)
-                       (: :use router)
-                       (: :start {: port})))
+  ["repl" port] (let [repl (coroutine.create (partial fennel.repl))
+                      stdin (luv.new_tty 0 true)]
+                  (coroutine.resume repl {:readChunk read-chunk : env
+                                          :allowedGlobals false})
+                  (start port)
+    (luv.read_start stdin #(coroutine.resume repl $2)))
+  ["start" port] (start port)
   _ (do (print "USAGE:
 fennel main.fnl start PORT
 fennel main.fnl index URL_FILE SOURCE_NAME

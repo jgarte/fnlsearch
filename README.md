@@ -14,9 +14,9 @@ Create a file of URLs, then index it with:
 
     make index URLS=/path/to/urls
 
-Run server:
+Run server: `make run PORT=8080`
 
-    make run PORT=8080
+During development use `make repll` instead.
 
 Originally based on this post: 
 https://hey.hagelb.org/users/technomancy/statuses/01J1AYF55SMFK81JS13S64YF5V
