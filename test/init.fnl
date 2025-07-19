@@ -3,7 +3,6 @@
 (local index (require :index))
 (local responses (require :responses))
 (local sql (require :sql))
-(local https (require :https))
 (local json (require :dkjson))
 (local request (require :request))
 
@@ -17,9 +16,7 @@
               :static {:why "because"}
               :robotstxt (require :robotstxt) : json
               :sqlite (require :luasql.sqlite3)
-              :moonmint (require :moonmint)
-              :request {:get (partial (. (require :request) :get) https)
-                        :user-agent "test"}}]
+              : request}]
     (set caps.db (sql.init caps db-path))
     ;; need to run `make test-server' in the background so these URLs work
     (index.index caps "test/urls.txt" "test")
@@ -52,78 +49,38 @@
     (t.= nil (. urls "Leiningen"))
     (t.is (. urls "readme"))))
 
-(fn tidy? [{: body}]
+(fn tidy? [body]
   (let [tidy (io.popen "tidy -q -e -" :w)]
     (tidy:write body)
     (tidy:close)))
 
 (fn test-tidy [caps]
   (t.is (tidy? (responses.home caps)))
-  (t.is (tidy? (responses.search caps {:rawQuery "q=technomancy"
-                                       :headers {}})))
+  (t.is (tidy? (responses.search caps {:q "technomancy"})))
   (t.is (tidy? (responses.snippet caps "static/why.html"))))
 
 (fn test-responses [caps]
   ;; both sources
-  (let [rawQuery "q=technomancy&source=test&source=test2"
-        response (responses.search caps {: rawQuery :headers {}})
-        headers (collect [_ [k v] (ipairs response.headers)] k v)]
-    (t.= 200 response.code)
-    (t.= "text/html" (. headers "Content-Type"))
-    (t.match "suspended" response.body)
-    (t.match "readme" response.body))
+  (let [html (responses.search caps {:q "technomancy"
+                                     :source ["test" "test2"]})]
+    (t.match "suspended" html)
+    (t.match "readme" html))
   ;; just one source
-  (let [rawQuery "q=technomancy&source=test"
-        response (responses.search caps {: rawQuery :headers {}})
-        headers (collect [_ [k v] (ipairs response.headers)] k v)]
-    (t.= 200 response.code)
-    (t.= "text/html" (. headers "Content-Type"))
-    (t.match "suspended" response.body)
-    (t.not-match "readme" response.body))
+  (let [html (responses.search caps {:q "technomancy" :source "test"})]
+    (t.match "suspended" html)
+    (t.not-match "readme" html))
   ;; no sources specified means all
-  (let [rawQuery "q=technomancy"
-        response (responses.search caps {: rawQuery :headers {}})
-        headers (collect [_ [k v] (ipairs response.headers)] k v)]
-    (t.= 200 response.code)
-    (t.= "text/html" (. headers "Content-Type"))
-    (t.match "suspended" response.body)
-    (t.match "readme" response.body))
+  (let [html (responses.search caps {:q "technomancy"})]
+    (t.match "suspended" html)
+    (t.match "readme" html))
   ;; the other source
-  (let [rawQuery "q=technomancy&source=test2"
-        response (responses.search caps {: rawQuery :headers {}})
-        headers (collect [_ [k v] (ipairs response.headers)] k v)]
-    (t.= 200 response.code)
-    (t.= "text/html" (. headers "Content-Type"))
-    (t.not-match "suspended" response.body)
-    (t.match "readme" response.body))
-  ;; remote source
-  (caps.db:add-remote "http://localhost:8733/search.json"
-                      "test-remote" "http://localhost:8733" "lol")
-  (set caps.sources (caps.db:sources))
-  (let [rawQuery "q=technomancy&source=test2&source=test-remote"
-        response (responses.search caps {: rawQuery :headers {}})
-        headers (collect [_ [k v] (ipairs response.headers)] k v)]
-    (t.= 200 response.code)
-    (t.= "text/html" (. headers "Content-Type"))
-    (t.match "zombo" response.body)
-    (t.match "haha.business" response.body)
-    (t.match "readme" response.body)))
-
-(fn test-json [caps]
-  (let [rawQuery "q=technomancy"
-        headers {"content-accept" "application/json"}
-        response (responses.search caps {: rawQuery : headers})
-        body (json.decode response.body)
-        titles (collect [_ {: title} (ipairs body.results)] title true)]
-    (t.= 200 response.code)
-    (t.= "application/json" (. response.headers "content-type"))
-    (t.is (. titles "readme"))
-    (t.is (. titles "Leiningen"))))
+  (let [html (responses.search caps {:q "technomancy" :source "test2"})]
+    (t.not-match "suspended" html)
+    (t.match "readme" html)))
 
 {: setup-all
  : test-search
  : test-sanitize
  : test-source
  : test-tidy
- : test-responses
- : test-json}
+ : test-responses}

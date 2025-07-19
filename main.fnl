@@ -1,8 +1,9 @@
 (local fennel (require :fennel))
-(local moonmint (require :moonmint))
 (local capabilities (require :capabilities))
-(local https (require :https))
-(local luv (require :luv))
+(local request (require :request))
+(local http-server (require :http.server))
+(local http-headers (require :http.headers))
+(local http-util (require :http.util))
 
 (set debug.traceback fennel.traceback)
 
@@ -15,19 +16,17 @@
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
                                               :read [db-path "*.txt" "sql/"
-                                                     "static/why.html" "/tmp/"]}
+                                                     "static/" "/tmp/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
-                              {: dbg : log : moonmint
+                              {: dbg : log : request
                                :sleep #(os.execute "sleep 1")
-                               :json (require :dkjson)
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))
 
 (set _G.caps caps) ; for repl
 
-(local env (setmetatable {: caps} {:__index _G})) ; for repl
 (local arg _G.arg)
 (local _ENV (capabilities.env))
 
@@ -37,45 +36,49 @@
 (local sql (require :sql))
 
 (set caps.db (sql.init caps db-path))
-(set caps.request (let [{: get : user-agent} (require :request)]
-                    {:get (partial get https) : user-agent}))
 
-(fn read-chunk []
-  (caps.io.write ">> ")
-  (caps.io.flush)
-  (case (coroutine.yield)
-    input (.. input "\n")
-    nil (caps.os.exit 0)))
+(fn parse-query [path]
+  (case (path:match "^([^%?]+)%?(.*)")
+    (path query) (values path (let [args {}]
+                                (each [k v (http-util.query_args query)]
+                                  (case (. args k)
+                                    nil (tset args k [v])
+                                    _ (table.insert (. args k) v)))
+                                args))
+    _ path))
+
+(fn handle [stream]
+  (let [req-headers (assert (stream:get_headers))]
+    (case (parse-query (req-headers:get ":path"))
+      "/" (responses.home caps)
+      "/why" (responses.snippet caps "static/why.html")
+      ("/q" q) (responses.search caps q)
+      path (or (responses.static caps path)
+               (responses.err 404 "not found")))))
+
+(fn respond [stream response]
+  (let [headers (http-headers.new)]
+    (headers:append ":status" (tostring (or response.status 200)))
+    (stream:write_headers headers false)
+    (if (= :string (type response))
+        (stream:write_chunk response true)
+        (stream:write_chunk response.body true))))
+
+(fn onstream [_server stream]
+  (case (pcall handle stream)
+    (true response) (respond stream response)
+    (_ msg) (respond stream (responses.err 500 msg))))
 
 (fn start [port]
-  (let [router (moonmint.router)]
-    (set caps.sources (caps.db:sources))
-    ;; can't use partial here because it would prevent reloads
-    (router:get "/" #(responses.home caps $))
-    (router:get "/q" #(responses.search caps $))
-    ;; in case you don't want to mess with content-accept
-    (router:get "/q.json" #(responses.search-json caps $))
-    (router:get "/why" #(responses.snippet caps "static/why.html"))
-    (router:get "/about" #(moonmint.response.redirect "/why"))
-    (router:get "/opensearch.xml" #(moonmint.response.file
-                                    "static/opensearch.xml"))
-    (router:get "/favicon.ico" #(moonmint.response.file
-                                 "static/favicon.ico"))
-    (router:get "/robots.txt" #(moonmint.response.file
-                                "static/robots.txt"))
-    (-> (moonmint)
-        (: :use router)
-        (: :start {: port}))))
+  (set caps.sources (caps.db:sources))
+  (let [server (assert (http-server.listen {:host "localhost"
+                                            : port : onstream}))]
+    (assert (server:listen))
+    (assert (server:loop))))
 
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
   ["add-remote" url name home ?desc] (caps.db:add-remote url name home ?desc)
-  ["repl" port] (let [repl (coroutine.create (partial fennel.repl))
-                      stdin (luv.new_tty 0 true)]
-                  (coroutine.resume repl {:readChunk read-chunk : env
-                                          :allowedGlobals false})
-                  (start port)
-    (luv.read_start stdin #(coroutine.resume repl $2)))
   ["start" port] (start port)
   _ (do (print "USAGE:
 fennel main.fnl start PORT

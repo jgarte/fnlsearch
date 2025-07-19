@@ -1,3 +1,0 @@
-[submodule "lua-https"]
-	path = lua-https
-	url = https://github.com/love2d/lua-https

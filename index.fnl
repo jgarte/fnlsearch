@@ -38,7 +38,7 @@
         title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
     {: title : body : source}))
 
-(fn index-body [io log body {: content-type} tmp db url now source]
+(fn index-body [io log body content-type tmp db url now source]
   (case (and content-type (normalize-type (content-type:lower)))
     :text (do (db:insert url now {:title url : body : source})
               (log :indexed-text url))
@@ -61,7 +61,8 @@
       (when (not= refresh? :new)
         (db:delete url))
       (case (request.get url)
-        {:status 200 : body : headers} (index-body io log body headers
+        {:status 200 : body : headers} (index-body io log body
+                                                   (headers:get "content-type")
                                                    tmp db url now source)
         {: status} (dbg :fail status)))))
 

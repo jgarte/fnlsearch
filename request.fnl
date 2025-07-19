@@ -1,24 +1,27 @@
-;; making an HTTPS request from lua requires choosing among a list of very
-;; bad options:
-;; * the luv stuff that comes with moonmint depends on deleted openssl APIs
-;; * lua-curl requires lua 5.1 or 5.2
-;; * lua-http doesn't work with 5.4
-;; * luasec does not validate certs by default
-;; * love2d's lua-https is not packaged in apt and is not documented
+(local http-request (case (pcall require :http.request)
+                      (true request) request
+                      _ (do
+                          ;; work around a bug in Debian packaging for lua-http:
+                          ;; https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1081208
+                          (set package.path (.. package.path ";/usr/share/lua/5.2/?.lua"))
+                          (require :http.request))))
+(local http-headers (require :http.headers))
 
-;; of these, for the simple kind of requests we are making here, love2d's client
-;; poses the least severe problems
-
+;; https://github.com/daurnimator/lua-http/issues/235
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
-(fn normalize-headers [headers]
-  (collect [k v (pairs headers)] (k:lower) v))
+(fn set-headers [req-headers ?headers]
+  (req-headers:append "user-agent" user-agent)
+  (each [k v (pairs (or ?headers []))] (req-headers:append k v)))
 
-(fn get [https url ?req-headers]
-  ;; with one arg, it gives us a "simplified" response which omits headers
-  (let [req-headers (doto (or ?req-headers {})
-                      (tset "user-agent" user-agent))
-        (status body headers) (https.request url {:headers req-headers})]
-    {: status : body :headers (normalize-headers headers)}))
+(fn get [url ?headers]
+  (let [req-headers (doto (http-headers.new)
+                      (: :append ":method" "GET"))
+        request (http-request.new_from_uri url req-headers)
+        _ (set-headers req-headers ?headers)
+        (headers stream) (assert (request:go 256))
+        body (assert (stream:get_body_as_string))
+        status (tonumber (headers:get ":status"))]
+    {: status : body : headers}))
 
 {: get : user-agent}
