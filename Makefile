@@ -1,7 +1,7 @@
 URLS ?= urls.txt
 PORT ?= 8082
 SRC=main.fnl html.fnl request.fnl sql.fnl index.fnl responses.fnl
-DEPS=moonmint robotstxt.lua capabilities.fnl dkjson.lua
+DEPS=robotstxt.lua capabilities.fnl dkjson.lua
 
 run: ; fennel main.fnl start $(PORT)
 repl: ; fennel main.fnl repl $(PORT)
@@ -21,6 +21,7 @@ BINDIR ?= $(PREFIX)/bin
 search: $(SRC)
 	echo "#!/usr/bin/env lua" > $@
 	fennel --compile --require-as-include main.fnl >> search
+	chmod 755 $@
 
 test-server: ; cd test/html && python3 -m http.server 8733
 
