@@ -1,0 +1,26 @@
+Source: technomancy-search
+Section: devel
+Priority: optional
+Maintainer: Phil Hagelberg <phil@hagelb.org>
+Build-Depends:
+ debhelper-compat (= 13),
+ fennel,
+ tidy
+Standards-Version: 4.7.0
+Homepage: https://search.technomancy.us
+Vcs-Browser: https://git.sr.ht/~technomancy/search
+Vcs-Git: https://git.sr.ht/~technomancy/search
+Rules-Requires-Root: no
+
+Package: technomancy-search
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ fennel,
+ lua-sql-sqlite3,
+ lua-http,
+ pandoc
+Description: Hyper-personalized search engine.
+ Indexes web sites and provides a web-based interface to show search
+ results in the borwser.

@@ -7,6 +7,7 @@ After=network-online.target
 
 User=search
 Group=search
+Environment=DB_PATH=/home/technomancy-search/data.db
 
 Type=exec
 Restart=on-failure

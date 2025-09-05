@@ -6,10 +6,6 @@ Installation:
 
     sudo apt install fennel lua-sql-sqlite3 lua-http pandoc
 
-(You might not find `fennel` in apt yet depending on your distro, but
-it's available in my [third-party repo](https://apt.technomancy.us) or
-you can [install manually](https://fennel-lang.org/setup) easily enough.)
-
 Create a file of URLs, then index it with:
 
     make index URLS=/path/to/urls
