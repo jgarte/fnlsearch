@@ -59,6 +59,10 @@
 (fn respond [stream response]
   (let [headers (http-headers.new)]
     (headers:append ":status" (tostring (or response.status 200)))
+    (if response.headers
+        (each [k v (pairs response.headers)]
+          (headers:append k v))
+        (headers:append "content-type" "text/html"))
     (stream:write_headers headers false)
     (if (= :string (type response))
         (stream:write_chunk response true)

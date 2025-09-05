@@ -1,4 +1,4 @@
-(local fennel (require :fennel))
+(local _fennel (require :fennel))
 (local t (require :test.faith))
 (local index (require :index))
 (local responses (require :responses))

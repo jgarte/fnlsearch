@@ -5,20 +5,18 @@
                           ;; https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1081208
                           (set package.path (.. package.path ";/usr/share/lua/5.2/?.lua"))
                           (require :http.request))))
-(local http-headers (require :http.headers))
 
-;; https://github.com/daurnimator/lua-http/issues/235
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
-(fn set-headers [req-headers ?headers]
-  (req-headers:append "user-agent" user-agent)
-  (each [k v (pairs (or ?headers []))] (req-headers:append k v)))
+;; https://github.com/daurnimator/lua-http/issues/235
+(fn set-headers [request method ?headers]
+  (request.headers:append ":method" method)
+  (request.headers:append "user-agent" user-agent)
+  (each [k v (pairs (or ?headers []))] (request.headers:append k v)))
 
 (fn get [url ?headers]
-  (let [req-headers (doto (http-headers.new)
-                      (: :append ":method" "GET"))
-        request (http-request.new_from_uri url req-headers)
-        _ (set-headers req-headers ?headers)
+  (let [request (doto (http-request.new_from_uri url)
+                  (set-headers :GET ?headers))
         (headers stream) (assert (request:go 256))
         body (assert (stream:get_body_as_string))
         status (tonumber (headers:get ":status"))]

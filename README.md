@@ -113,6 +113,5 @@ Dependencies:
 * [dkjson](http://dkolf.de/dkjson-lua/) (included)
 * [lua-http](https://github.com/daurnimator/lua-http) (apt)
 * [sqlite](https://www.sqlite.org/) (apt)
-* [luv](https://github.com/luvit/luv) (apt)
 * [lua-sql](https://lunarmodules.github.io/luasql/) (apt)
 * [pandoc](https://pandoc.org) (apt)
