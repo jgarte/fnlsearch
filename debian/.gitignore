@@ -1,0 +1,8 @@
+/.debhelper/generated
+/debhelper-build-stamp
+/*.debhelper.log
+/technomancy-search/DEBIAN/
+/technomancy-search/usr
+/technomancy-search/etc
+/technomancy-search.substvars
+/files

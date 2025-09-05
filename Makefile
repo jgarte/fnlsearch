@@ -3,7 +3,7 @@ PORT ?= 8082
 SRC=main.fnl html.fnl request.fnl sql.fnl index.fnl responses.fnl
 DEPS=robotstxt.lua capabilities.fnl dkjson.lua
 
-all: search
+all: technomancy-search
 
 run: ; fennel main.fnl start $(PORT)
 repl: ; fennel main.fnl repl $(PORT)
@@ -18,20 +18,20 @@ lint: ; fennel-ls --lint $(SRC)
 
 DESTDIR ?=
 PREFIX ?= /usr/local
-BINDIR ?= $(PREFIX)/bin
+BIN_DIR ?= $(PREFIX)/bin
 
-search: $(SRC)
+technomancy-search: $(SRC)
 	echo "#!/usr/bin/env lua" > $@
-	fennel --compile --require-as-include main.fnl >> search
+	fennel --compile --require-as-include main.fnl >> $@
 	chmod 755 $@
 
-install: search
+install: technomancy-search
 	mkdir -p $(DESTDIR)$(BIN_DIR) && cp $< $(DESTDIR)$(BIN_DIR)/
-	mkdir -p $(DESTDIR)/etc $(DESTDIR)/lib/systemd/system/
-	install -m 644 technomancy-search.service $(DESTDIR)/lib/systemd/system/
+	mkdir -p $(DESTDIR)/etc/systemd/system/
+	install -m 644 technomancy-search.service $(DESTDIR)/etc/systemd/system/
 
 uninstall:
-	rm -f $(DESTDIR)$(BIN_DIR)/search
+	rm -f $(DESTDIR)$(BIN_DIR)/technomancy-search
 
 test-server: ; cd test/html && python3 -m http.server 8733
 

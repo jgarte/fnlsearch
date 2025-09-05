@@ -6,10 +6,8 @@ SEARCH_HOME=/home/technomancy-search
 case "$1" in
     configure)
         # make sure that the technomancy-search user/group exists
-        chown technomancy-group ${SEARCH_HOME} 2>/dev/null ||
-            adduser --system --disabled-password technomancy-search
-
-        chown -R technomancy-search ${SEARCH_HOME}
+        chown technomancy-search ${SEARCH_HOME} 2>/dev/null ||
+            adduser --system --home ${SEARCH_HOME} --disabled-password technomancy-search
 
         systemctl enable --now technomancy-search.service
         exit 0
