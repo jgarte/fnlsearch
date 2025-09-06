@@ -5,14 +5,14 @@ DEPS=robotstxt.lua capabilities.fnl dkjson.lua
 
 all: technomancy-search
 
-run: ; fennel main.fnl start $(PORT)
-repl: ; fennel main.fnl repl $(PORT)
+run: ; fennel --no-compiler-sandbox main.fnl start $(PORT)
+repl: ; fennel --no-compiler-sandbox main.fnl repl $(PORT)
 runloop: run ; sleep 2; $(MAKE) runloop
 repll: repl ; sleep 2; $(MAKE) repll
 
-test: ; fennel test/faith.fnl --tests test
-testall: ; fennel test/faith.fnl --tests test test.request
-index: ; fennel main.fnl index $(URLS) $(URLS)
+test: ; fennel --no-compiler-sandbox test/faith.fnl --tests test
+testall: ; fennel --no-compiler-sandbox test/faith.fnl --tests test test.request
+index: ; fennel --no-compiler-sandbox main.fnl index $(URLS) $(URLS)
 count: ; cloc $(SRC) ; cloc $(DEPS)
 lint: ; fennel-ls --lint $(SRC)
 
@@ -22,7 +22,7 @@ BIN_DIR ?= $(PREFIX)/bin
 
 technomancy-search: $(SRC)
 	echo "#!/usr/bin/env lua" > $@
-	fennel --compile --require-as-include main.fnl >> $@
+	fennel --no-compiler-sandbox --compile --require-as-include main.fnl >> $@
 	chmod 755 $@
 
 install: technomancy-search

@@ -78,19 +78,15 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
     (each [_ name (ipairs unknown)] (log :unknown-source name))
     html))
 
-(λ snippet [{: io} name]
-  (with-open [f (io.open name)]
-    (layout (unescaped (f:read :*all)))))
+(λ snippet [{: resource} name] (layout (unescaped (resource name))))
 
 (λ err [status msg]
   {: status :body (layout [:h2 {} "Error"] [:p {} msg])})
 
-(λ static [{: io} path]
+(λ static [{: resource} path]
   (assert (not (path:find "%.%.")) "bad path")
-  (case (io.open (.. "static" path))
-    f {:body (let [content (f:read :*all)]
-               (f:close)
-               content)
+  (case (resource (.. "static" path))
+    f {:body f
        :headers {:content-type (case (path:match "%.[a-z]+")
                                  :xml "text/xml"
                                  :ico "image/x-icon"

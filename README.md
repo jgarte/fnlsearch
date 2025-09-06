@@ -2,7 +2,10 @@
 
 My own [personal search engine](https://search.technomancy.us).
 
-Installation:
+You can install it from [my apt repository](https://apt.technomancy.us);
+this will start it on port 8082, so you'll want Caddy in front of it.
+
+Manual installation:
 
     sudo apt install fennel lua-sql-sqlite3 lua-http pandoc
 

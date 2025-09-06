@@ -1,9 +1,7 @@
-(λ read [io path] (with-open [f (assert (io.open path))] (f:read :*all)))
-
-(λ open [io sqlite db-path]
+(λ open [io resource sqlite db-path]
   (case (io.open db-path)
     f (do (f:close) (: (sqlite.sqlite3) :connect db-path))
-    _ (let [schema (read io "sql/schema.sql")
+    _ (let [schema (resource "sql/schema.sql")
             db (: (sqlite.sqlite3) :connect db-path)]
         (each [table (schema:gmatch "[^;]+")]
           (case (db:execute table)
@@ -60,12 +58,12 @@
                                       (conn:escape home)
                                       (conn:escape description)))))
 
-(λ init [{: io : sqlite} db-path]
-  {:conn (open io sqlite db-path)
+(λ init [{: io : sqlite : resource} db-path]
+  {:conn (open io resource sqlite db-path)
    : search : insert : refresh : sources : add-remote : delete
    :queries (collect [_ name (ipairs [:insert :search :refresh :delete
                                       :sources :search-source
                                       :remotes :add-remote])]
-              name (read io (string.format "sql/%s.sql" name)))})
+              name (resource (string.format "sql/%s.sql" name)))})
 
 {: init}

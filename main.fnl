@@ -12,15 +12,17 @@
 (local slow? (os.getenv "SLOW"))
 (local db-path (or (os.getenv "DB_PATH") "data.db"))
 
+(local resources (require :resources))
+(fn resource [path] (. resources path))
+
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
-                                              :read [db-path "*.txt" "sql/"
-                                                     "static/" "/tmp/"]}
+                                              :read [db-path "/tmp/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
-                              {: dbg : log : request
+                              {: dbg : log : request : resource
                                :sleep #(os.execute "sleep 1")
                                :robotstxt (require :robotstxt)
                                :sqlite (require :luasql.sqlite3)}))

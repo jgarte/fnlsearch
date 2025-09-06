@@ -11,7 +11,7 @@ Environment=DB_PATH=/home/technomancy-search/data.db
 Type=exec
 Restart=on-failure
 
-ExecStart=/usr/bin/technomancy-search 8082
+ExecStart=/usr/bin/technomancy-search start 8082
 WorkingDirectory=/home/technomancy-search/
 
 NoNewPrivileges=yes
