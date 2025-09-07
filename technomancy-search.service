@@ -5,23 +5,23 @@ After=network-online.target
 
 [Service]
 
-User=technomancy-search
-Environment=DB_PATH=/home/technomancy-search/data.db
+ExecStart=technomancy-search start 8082
+Environment=DB_PATH=/var/lib/private/technomancy-search/data.db
 
 Type=exec
 Restart=on-failure
 
-ExecStart=/usr/bin/technomancy-search start 8082
-WorkingDirectory=/home/technomancy-search/
+DynamicUser=true
+StateDirectory=technomancy-search
 
 NoNewPrivileges=yes
 PrivateTmp=yes
 PrivateDevices=yes
+PrivateUsers=yes
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictNamespaces=yes
 RestrictRealtime=yes
 DevicePolicy=closed
-ProtectSystem=full
 ProtectControlGroups=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
