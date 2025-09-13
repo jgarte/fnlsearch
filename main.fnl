@@ -85,9 +85,17 @@
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
   ["add-remote" url name home ?desc] (caps.db:add-remote url name home ?desc)
+  ["gts" path username] (let [gts (require :gts)]
+                          (each [url (pairs (gts.statuses caps.sqlite path
+                                                          username))]
+                            (print url))
+                          (each [url (pairs (gts.boosts caps.sqlite path
+                                                        username))]
+                            (print url)))
   ["start" port] (start port)
   _ (do (print "USAGE:
 fennel main.fnl start PORT
 fennel main.fnl index URL_FILE SOURCE_NAME
+fennel main.fnl gts PATH_TO_GTS_DB GTS_USERNAME > urls.txt
 fennel main.fnl add-remote URL NAME HOME [DESCRIPTION]")
         (caps.os.exit 1)))
