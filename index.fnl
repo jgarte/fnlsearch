@@ -71,7 +71,8 @@
   (each [line (io.lines url-file)]
     (let [url (line:match "([^ #]+)")
           tmp (os.tmpname)]
-      (index-url caps url tmp (os.time) source)
+      (case (pcall index-url caps url tmp (os.time) source)
+        (false msg) (print :ERR msg))
       (when ?slowly?
         (sleep)))))
 
