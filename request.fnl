@@ -8,15 +8,9 @@
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
-;; https://github.com/daurnimator/lua-http/issues/235
-(fn set-headers [request method ?headers]
-  (request.headers:append ":method" method)
-  (request.headers:append "user-agent" user-agent)
-  (each [k v (pairs (or ?headers []))] (request.headers:append k v)))
-
-(fn get [url ?headers]
-  (let [request (doto (http-request.new_from_uri url)
-                  (set-headers :GET ?headers))
+(fn get [url]
+  (let [request (http-request.new_from_uri url)
+        _ (request.headers:append "user-agent" user-agent)
         (headers stream) (assert (request:go 256))
         body (assert (stream:get_body_as_string))
         status (tonumber (headers:get ":status"))]
