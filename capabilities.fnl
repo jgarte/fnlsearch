@@ -36,10 +36,12 @@
 (local safe-fennel-keys [:version :doc :gensym :mangle :unmangle :path :view
                          :traceback :syntax :parser])
 (fn safe-fennel [env]
-  (fn eval [str options]
-    (fennel.eval str (doto (collect [k v (pairs options)] k v)
-                       (tset :env env))))
-  (read-only (collect [_ k (ipairs safe-fennel-keys) :into {: eval}]
+  (fn eval [str options ...]
+    (fennel.eval str (doto (collect [k v (pairs (or options {}))] k v)
+                       (tset :env (or options.env env))) ...))
+  (fn load-code [code env name]
+    (fennel.load-code code (assert env "must provide environment") name))
+  (read-only (collect [_ k (ipairs safe-fennel-keys) :into {: eval : load-code}]
                (values k (. fennel k))) :fennel))
 
 (local safe-globals [:assert :error :next :pcall :xpcall :pairs :ipairs :select
@@ -62,21 +64,31 @@
         (let [pmod (modname:gsub "%." "/")
               mod (or (preload env modname)
                       (if (file-exists? (.. pmod ".lua"))
-                          ((assert (loadfile (.. pmod ".lua") :bt env)))
+                          ((assert (loadfile (.. pmod ".lua") :t env)))
+                          (file-exists? (.. pmod "/init.lua"))
+                          ((assert (loadfile (.. pmod "/init.lua") :t env)))
                           (fennel.dofile (.. pmod ".fnl") {: env})))]
           (tset env.package.loaded modname mod)
           mod))))
 
-(fn env [?extra]
+(fn safe-getmetatable [x]
+  (case (type x) :string nil :userdata nil _ (getmetatable x)))
+
+(fn env [?extra ?package]
   "Return an environment table under which it's safe to run untrusted code.
 
 The globals in this environment cannot access the outside world; this access
 must be done thru capabilities which are passed lexically instead of thru
-ambient authority."
+ambient authority.
+
+Accepts table of ?extra values to put in the environment and table of ?package
+entries to put in as sandboxed package.loaded modules."
   (let [env {:package {:loaded {:capabilities (require :capabilities)}
                        :preload {}}
-             :getmetatable #nil
+             : setmetatable :getmetatable safe-getmetatable
              :debug {:traceback fennel.traceback}}]
+    (each [k v (pairs (or ?package {}))]
+      (set (. env.package.loaded k) v))
     (set env._G env)
     (set env.require (require-for env))
     (set env.package.loaded.fennel (safe-fennel env))
@@ -174,4 +186,11 @@ given directory will be allowed; otherwise it must be an exact match."
                                  gname " " fname))
                      _g data)))))
 
-{:for for* : wrap-allowed : env}
+(fn expose [env packages]
+  "Expose a list of packages inside the sandbox to the outer environment.
+This allows a repl running in the outer scope to reload sandboxed modules,
+but beware that reloading causes them to run outside the sandbox."
+  (each [_ p (ipairs packages)]
+    (set (. package.loaded p) (. env.package.loaded p))))
+
+{:for for* : wrap-allowed : env : expose}
