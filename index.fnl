@@ -1,15 +1,19 @@
 (local stale-time 604800) ; 1 week
+(local robotstxt (require :robotstxt))
+(local dbg (or _G.dbg #nil))
+
+(local _fennel (require :fennel))
 
 (fn needs-refresh? [db url now]
-  (case (db:refresh url)
-    crawled-at (< (tonumber crawled-at) (- now stale-time))
+  (case (db.pages.refresh url)
+    {: crawled_at} (< (tonumber crawled_at) (- now stale-time))
     _ :new))
 
 (local pandoc-cmd "pandoc -s -f html -t markdown --sandbox %q")
 
 (local robots-domains {})
 
-(fn get-robots [request robotstxt prefix]
+(fn get-robots [request prefix]
   (case (request.get (.. prefix "/robots.txt"))
     {:status 200 : body} (let [lines (icollect [l (body:gmatch "([^\n]+)")] l)
                                r (robotstxt.load_table lines)]
@@ -17,13 +21,13 @@
                            (set (. robots-domains prefix) r))
     _ true))
 
-(fn allowed? [request robotstxt dbg url]
+(fn allowed? [request url]
   (let [[prefix path] [(url:match "^(https?://[^/]+)(.*)")]]
     (case (. robots-domains prefix)
       r (doto (r:check_allowed path)
           (dbg :allowed? url))
-      _ (or (get-robots request robotstxt prefix)
-            (allowed? request robotstxt dbg url)))))
+      _ (or (get-robots request prefix)
+            (allowed? request url)))))
 
 (fn html->text [io tmp]
   (with-open [pandoc (assert (io.popen (pandoc-cmd:format tmp)))]
@@ -33,33 +37,29 @@
   (if (content-type:find "html") :html
       (content-type:find "text") :text))
 
-(fn extract-metadata [body source] ; pandoc gives us a metadata header
-  (let [metadata (body:match "---(.*)---")
-        title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
-    {: title : body : source}))
-
 (fn index-body [io log body content-type tmp db url now source]
   (case (and content-type (normalize-type (content-type:lower)))
-    :text (do (db:insert url now {:title url : body : source})
+    :text (do (db.pages.insert url url body source now)
               (log :indexed-text url))
-    :html (do (with-open [f (io.open tmp :w)] (f:write body))
-              (db:insert url now (extract-metadata (html->text io tmp) source))
-              (log :indexed url))
+    :html (let [_ (with-open [f (io.open tmp :w)] (f:write body))
+                body (html->text io tmp)
+                metadata (body:match "---(.*)---") ; pandoc gives us metadata
+                title (and metadata (metadata:match "\ntitle: ([^\n]*)"))]
+            (db.pages.insert url (or title url) body source now)
+            (log :indexed url))
     _ (log :not-indexable url content-type)))
 
-;; we will skip most of these things after we get the content-type, but
-;; lua-https does not give us a way to see the content-type until after
-;; the entire download has been completed, so these should be skipped early.
 (fn indexable? [url] (not (or (url:find "%.mp4$") (url:find "%.webm$")
                               (url:find "%.jpe?g$") (url:find "%.gif$")
                               (url:find "^https://youtu%.?be"))))
 
-(fn index-url [{: io : db : log : dbg : request : robotstxt} url tmp now source]
+(fn index-url [{: io : db : log : request} url tmp now source]
   (dbg :indexing url)
   (let [refresh? (needs-refresh? db url now)]
-    (when (and refresh? (allowed? request robotstxt dbg url) (indexable? url))
+    (when (and refresh? (allowed? request url) (indexable? url))
       (when (not= refresh? :new)
-        (db:delete url))
+        (db.pages.delete url))
+      ;; TODO: check content-type; skip non-textual
       (case (request.get url)
         {:status 200 : body : headers} (index-body io log body
                                                    (headers:get "content-type")

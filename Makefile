@@ -6,7 +6,7 @@ DEPS=robotstxt.lua capabilities.fnl dkjson.lua
 all: technomancy-search
 
 run: ; fennel --no-compiler-sandbox main.fnl start $(PORT)
-repl: ; fennel --no-compiler-sandbox main.fnl repl $(PORT)
+repl: ; fennel --no-compiler-sandbox main.fnl start $(PORT) -
 runloop: run ; sleep 2; $(MAKE) runloop
 repll: repl ; sleep 2; $(MAKE) repll
 

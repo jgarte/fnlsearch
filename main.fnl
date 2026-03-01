@@ -4,6 +4,10 @@
 (local http-server (require :http.server))
 (local http-headers (require :http.headers))
 (local http-util (require :http.util))
+(local lsqlite3 (require :lsqlite3))
+(local cqueues (require :cqueues))
+(local cqueues-socket (require :cqueues.socket))
+(local lpeg (require :lpeg))
 
 (set debug.traceback fennel.traceback)
 
@@ -18,26 +22,24 @@
 (local caps (capabilities.for _G {:os {:time os.time :tmpname os.tmpname
                                        :exit [0 1]}
                                   :io {:open {:write ["/tmp/"]
-                                              :read [db-path "/tmp/"]}
+                                              :read [db-path "/tmp/" "sql/"]}
                                        :write io.write :flush io.flush
                                        :stdin io.stdin :lines io.lines
                                        :popen ["pandoc"]}}
-                              {: dbg : log : request : resource
-                               :sleep #(os.execute "sleep 1")
-                               :robotstxt (require :robotstxt)
-                               :sqlite (require :luasql.sqlite3)}))
+                              {: log : request : resource
+                               :sleep #(os.execute "sleep 1")}))
 
 (set _G.caps caps) ; for repl
 
 (local arg _G.arg)
-(local _ENV (capabilities.env))
+(local _ENV (capabilities.env {: setmetatable : getmetatable : dbg}
+                              {: lpeg}))
 
 ;; these run in the sandbox
 (local index (require :index))
 (local responses (require :responses))
-(local sql (require :sql))
 
-(set caps.db (sql.init caps db-path))
+(set caps.db (fennel.dofile "db.fnl" {} db-path caps.io lsqlite3))
 
 (fn parse-query [path]
   (case (path:match "^([^%?]+)%?(.*)")
@@ -75,27 +77,48 @@
     (true response) (respond stream response)
     (_ msg) (respond stream (responses.err 500 msg))))
 
-(fn start [port]
-  (set caps.sources (caps.db:sources))
-  (let [server (assert (http-server.listen {:host "localhost"
+(fn repl [path]
+  (print "repl on" path)
+  ;; arbitrarily accept only a single connection instead of continuing to listen
+  (let [client (if (= path "-")
+                   (cqueues-socket.fdopen 0)
+                   (: (cqueues-socket.listen {: path :unlink true}) :accept))]
+    (fn onValues [xs]
+      (client:write (table.concat xs "\t"))
+      (client:write "\n"))
+    (fn onError [errtype err]
+      (client:write
+       (case errtype
+         "Runtime" (.. (fennel.traceback (tostring err) 4) "\n")
+         _ (: "%s error: %s\n" :format errtype (tostring err)))))
+    (fn readChunk []
+      (client:write ">> ")
+      (client:flush)
+      (case (client:read)
+        input (.. input "\n")
+        nil (do (caps.db.close)
+                (caps.os.exit 0))))
+    (fennel.repl {: readChunk : onValues : onError
+                  :allowedGlobals (icollect [n (pairs _ENV) &into [:caps]] n)
+                  :env (setmetatable {: caps} {:__index _ENV})})))
+
+(fn start [port ?repl-path]
+  (set caps.sources (caps.db.pages.sources))
+  (let [cq (cqueues.new)
+        server (assert (http-server.listen {:host "localhost" : cq
                                             : port : onstream}))]
+    (when ?repl-path
+      (cq:wrap (partial repl ?repl-path)))
     (assert (server:listen))
     (assert (server:loop))))
 
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
-  ["add-remote" url name home ?desc] (caps.db:add-remote url name home ?desc)
   ["gts" path username] (let [gts (require :gts)]
-                          (each [url (pairs (gts.statuses caps.sqlite path
-                                                          username))]
-                            (print url))
-                          (each [url (pairs (gts.boosts caps.sqlite path
-                                                        username))]
-                            (print url)))
-  ["start" port] (start port)
+                          (gts.print-urls lsqlite3 path username))
+  ["start" port ?repl-path] (start port ?repl-path)
   _ (do (print "USAGE:
-fennel main.fnl start PORT
+fennel main.fnl start PORT [REPL_SOCKET]
 fennel main.fnl index URL_FILE SOURCE_NAME
-fennel main.fnl gts PATH_TO_GTS_DB GTS_USERNAME > urls.txt
-fennel main.fnl add-remote URL NAME HOME [DESCRIPTION]")
+fennel main.fnl gts PATH_TO_GTS_DB GTS_USERNAME > urls.txt")
         (caps.os.exit 1)))

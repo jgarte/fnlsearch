@@ -1,4 +1,5 @@
-SELECT distinct url, title, rank
-FROM pages
-WHERE body MATCH '%s'
-ORDER BY rank;
+SELECT distinct url, title
+  FROM pages
+ WHERE body MATCH ?
+--   AND source IN (?)
+ ORDER BY rank

@@ -7,7 +7,7 @@ this will start it on port 8082, so you'll want Caddy in front of it.
 
 Manual installation:
 
-    sudo apt install fennel lua-sql-sqlite3 lua-http pandoc
+    sudo apt install fennel lua-lsqlite3 lua-http pandoc
 
 Create a file of URLs, then index it with:
 
@@ -109,8 +109,9 @@ Dependencies:
 * [fennel](https://fennel-lang.org)
 * [RobotsTXT](https://zadzmo.org/code/robotstxt/) (included)
 * [capabilities.fnl](https://git.sr.ht/~technomancy/capabilities.fnl) (included)
+* [litehug](https://git.sr.ht/~technomancy/litehug) (included)
 * [dkjson](http://dkolf.de/dkjson-lua/) (included)
 * [lua-http](https://github.com/daurnimator/lua-http) (apt)
 * [sqlite](https://www.sqlite.org/) (apt)
-* [lua-sql](https://lunarmodules.github.io/luasql/) (apt)
+* [lsqlite3](https://lua.sqlite.org/) (apt)
 * [pandoc](https://pandoc.org) (apt)

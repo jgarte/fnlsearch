@@ -7,6 +7,8 @@
       (html [:html {:lang "en"}
              [:head {}
               [:meta {:charset "UTF-8"}]
+              [:meta {:name "viewport"
+                      :content "width=device-width, initial-scale=1"}]
               [:link {:rel "search" : title :href "/opensearch.xml"
                       :type "application/opensearchdescription+xml"}]
               [:style {}
@@ -17,29 +19,31 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
               [:h1 {} title]
               [:div {:id "contents"} ...]
               [:footer {}
-               [:p {} "site © 2025 Phil Hagelberg | "
+               [:p {} "site © 2025-2026"
+                [:a {:href "https://technomancy.us/colophon"} "Phil Hagelberg"] "|"
                 [:a {:href "/"} "home"] "|"
                 [:a {:href "/why"} "why"] "|"
                 [:a {:href "https://git.sr.ht/~technomancy/search"}
                  "source"]]]]] true)))
 
-(fn source-selector [{: name : home : description}]
+(fn _source-selector [{: source : home : description}]
   [:li {} [:label {:title description}
-           [:input {:name "source" :type "checkbox" :value name}]
+           [:input {:name "source" :type "checkbox" :value source}]
            (if home
-               [:a {:href home} name]
-               name)]])
+               [:a {:href home} source]
+               source)]])
 
-(fn form [sources]
+(fn form [_sources]
   [:form {:action "/q" :method "GET"}
    [:input {:type "text" :name "q" :placeholder "query"}]
    [:input {:type "submit" :value "search"}]
-   (if (. sources 2)
-       [:details {:id "sources"}
-        [:summary {} "search only specific sources"]
-        (icollect [_ source (ipairs sources)
-                   &into [:ul {}]]
-          (source-selector source))])])
+   ;; (if (. sources 2)
+   ;;     [:details {:id "sources"}
+   ;;      [:summary {} "search only specific sources"]
+   ;;      (icollect [_ source (ipairs sources)
+   ;;                 &into [:ul {}]]
+   ;;        (source-selector source))])
+   ])
 
 (λ home [{: sources}]
   (layout (form sources)))
@@ -59,9 +63,10 @@ font-size:18px;color:#444;padding:0 10px}h1,h2,h3{line-height:1.2}"]
 (fn clean-title [title]
   (pick-values 1 (title:gsub "\\([,%?!|\"])" "%1")))
 
-(fn local-results [db q locals]
+(fn local-results [db q _sources]
   (let [results (if (and q (not= q ""))
-                    (icollect [url title (db:search q locals)
+                    (icollect [_ {: url : title} (ipairs (db.search
+                                                          (string.format "%q" q)))
                                &into [:ul {}]]
                       [:li {} [:a {:href url} (clean-title title)]]))]
     (if (and results (. results 3))
