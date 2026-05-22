@@ -32,7 +32,8 @@
 (set _G.caps caps) ; for repl
 
 (local arg _G.arg)
-(local _ENV (capabilities.env {: setmetatable : getmetatable : dbg}
+;; TODO: get rid of rawset
+(local _ENV (capabilities.env {: setmetatable : getmetatable : dbg : rawset}
                               {: lpeg}))
 
 ;; these run in the sandbox
