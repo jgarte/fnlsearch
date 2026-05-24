@@ -4,11 +4,6 @@
 
 (λ read [io path] (with-open [f (assert (io.open path))] (f:read :*all)))
 
-(λ open [io sqlite db-path]
-  (case (io.open db-path)
-    f (do (f:close) (sqlite.open db-path))
-    _ (assert (sqlite.open db-path))))
-
 (fn step [db stmt sqlite]
   (match (stmt:step)
     sqlite.ROW true
@@ -60,7 +55,7 @@ be one of :!, :1, :n, or :iterator."
   (let [io (or ?io _G.io)
         sqlite (or ?sqlite (require :lsqlite3))
         sql-path (or ?sql-path "sql/%s.sql")
-        db (open io sqlite db-path)
+        db (sqlite.open db-path)
         check-migration-stmt (and ?migrations (migrate-prep db))]
     (fn add-query [t name ?what] ; for repl use
       ;; TODO: splice into existing table, don't replace!

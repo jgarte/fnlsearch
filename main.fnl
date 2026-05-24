@@ -116,7 +116,7 @@
 (case arg
   ["index" url-file source] (index.index caps url-file source slow?)
   ["gts" path username] (let [gts (require :gts)]
-                          (gts.print-urls lsqlite3 path username))
+                          (gts.print-urls caps.io lsqlite3 path username))
   ["start" port ?repl-path] (start port ?repl-path)
   _ (do (print "USAGE:
 fennel main.fnl start PORT [REPL_SOCKET]

@@ -1,5 +1,6 @@
-URLS ?= urls.txt
 PORT ?= 8082
+GTS_DB ?= /var/gotosocial/sqlite.db
+GTS_USERNAME ?= technomancy
 SRC=main.fnl html.fnl request.fnl sql.fnl index.fnl responses.fnl
 DEPS=robotstxt.lua capabilities.fnl dkjson.lua
 
@@ -12,7 +13,15 @@ repll: repl ; sleep 2; $(MAKE) repll
 
 test: ; fennel --no-compiler-sandbox test/faith.fnl --tests test
 testall: ; fennel --no-compiler-sandbox test/faith.fnl --tests test test.request
-index: ; fennel --no-compiler-sandbox main.fnl index $(URLS) $(URLS)
+
+urls/gts.txt:
+	fennel --no-compiler-sandbox main.fnl gts $(GTS_DB) $(GTS_USERNAME) > $@
+
+index:
+	fennel --no-compiler-sandbox main.fnl index urls/bookmarks.txt bookmarks
+	fennel --no-compiler-sandbox main.fnl index urls/gts.txt gotosocial
+	fennel --no-compiler-sandbox main.fnl index urls/masto.txt mastodon
+
 count: ; cloc $(SRC) ; cloc $(DEPS)
 lint: ; fennel-ls --lint $(SRC)
 

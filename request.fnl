@@ -8,11 +8,13 @@
 
 (local user-agent "technomancy-search 0.1 (https://search.technomancy.us)")
 
+(local timeout 500)
+
 (fn get [url]
   (let [request (http-request.new_from_uri url)
         _ (request.headers:append "user-agent" user-agent)
-        (headers stream) (assert (request:go 256))
-        body (assert (stream:get_body_as_string))
+        (headers stream) (assert (request:go timeout))
+        body (assert (stream:get_body_as_string timeout))
         status (tonumber (headers:get ":status"))]
     {: status : body : headers}))
 

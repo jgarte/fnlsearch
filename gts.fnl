@@ -1,5 +1,5 @@
 (fn bad-url? [url]
-  (or (url:find "/tags/") (url:find "https://youtube.com")))
+  (or (url:find "/tags/") (url:find "youtube.com")))
 
 (fn add-urls [results urls]
   (each [_ {: content} (ipairs results)]
@@ -7,7 +7,7 @@
       (if (not (bad-url? url))
           (values url true)))))
 
-(fn print-urls [lsqlite3 path username]
+(fn print-urls [io lsqlite3 path username]
   (let [litehug (require :litehug)
         db (litehug.init path {:gts {:statuses :n :boosts :n}}
                          [] io lsqlite3)

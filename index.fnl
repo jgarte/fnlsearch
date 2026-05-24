@@ -49,9 +49,11 @@
             (log :indexed url))
     _ (log :not-indexable url content-type)))
 
+;; TODO: keep trarck of dead/blocked domains
 (fn indexable? [url] (not (or (url:find "%.mp4$") (url:find "%.webm$")
                               (url:find "%.jpe?g$") (url:find "%.gif$")
-                              (url:find "^https://youtu%.?be"))))
+                              (url:find "^https://youtu%.?be")
+                              (url:find "^https://www%.youtu%.?be"))))
 
 (fn index-url [{: io : db : log : request} url tmp now source]
   (dbg :indexing url)
@@ -72,7 +74,7 @@
     (let [url (line:match "([^ #]+)")
           tmp (os.tmpname)]
       (case (pcall index-url caps url tmp (os.time) source)
-        (false msg) (print :ERR msg))
+        (false msg) (print :ERR url msg))
       (when ?slowly?
         (sleep)))))
 
