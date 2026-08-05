@@ -104,6 +104,9 @@ Copyright © 2025 Phil Hagelberg
 
 Released under the [MIT license](LICENSE).
 
+Please see [my contributing guide](https://technomancy.us/contributing)
+if you wish to submit patches.
+
 Dependencies:
 
 * [fennel](https://fennel-lang.org)
